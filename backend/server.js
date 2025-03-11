@@ -2,6 +2,7 @@ require('dotenv').config();
 const express=require("express");
 const mongoose=require("mongoose");
 const cors=require("cors");
+const therapistRoutes=require("./routes/therapistRoutes");
 
 const PORT=3000;
 
@@ -19,6 +20,7 @@ mongoose.connect(process.env.MONGODB_URI).then(()=>{
 
 const authRoutes=require("./routes/authRoutes");
 app.use("/api/auth",authRoutes);
+app.use("/api/therapist",therapistRoutes);
 
 app.listen(PORT,()=>{
     console.log(`Server is running on: http://localhost:${PORT}`);    
