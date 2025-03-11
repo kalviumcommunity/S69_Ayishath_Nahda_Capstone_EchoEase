@@ -22,6 +22,9 @@ const authRoutes=require("./routes/authRoutes");
 app.use("/api/auth",authRoutes);
 app.use("/api/therapist",therapistRoutes);
 
+const patientRoutes=require("./routes/patientRoutes");
+app.use("/api/patients",patientRoutes);
+
 app.listen(PORT,()=>{
     console.log(`Server is running on: http://localhost:${PORT}`);    
 });
