@@ -6,7 +6,7 @@ const authMiddleware = require("../middleware/authMiddleware");
 // POST: Add a new patient
 router.post("/", authMiddleware, async (req, res) => {
     try {
-        console.log("🔹 Request received:", req.body); // Debugging log
+        console.log("Request received:", req.body); // Debugging log
 
         const { patientName, age, nativeLanguage } = req.body;
 
@@ -17,10 +17,10 @@ router.post("/", authMiddleware, async (req, res) => {
         const newPatient = new NewPatient({ patientName, age, nativeLanguage });
 
         await newPatient.save();
-        console.log("✅ Patient saved successfully:", newPatient); // Debugging log
+        console.log(" Patient saved successfully:", newPatient); // Debugging log
         res.status(201).json({ message: "Patient added successfully!", patient: newPatient });
     } catch (error) {
-        console.error("❌ Error adding patient:", error); // Debugging log
+        console.error("Error adding patient:", error); // Debugging log
         res.status(500).json({ error: "Server error" });
     }
 });

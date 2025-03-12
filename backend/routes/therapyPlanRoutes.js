@@ -28,7 +28,9 @@ router.post("/", authMiddleware, (req, res) => {
 router.get("/:patientName", authMiddleware, (req,res)=>{
     TherapyPlan.find({patientName: req.params.patientName})
     .then(therapyPlans =>{
-        if(!therapyPlans) return res.status(404).json({error:"No therapy plans found for this patient"});
+        if(!therapyPlans || therapyPlans.length === 0) {
+            return res.status(404).json({error:"No therapy plans found for this patient"});
+        }
         res.json(therapyPlans);
     })
     .catch(err =>res.status(500).json({error:"Server error",err}));
