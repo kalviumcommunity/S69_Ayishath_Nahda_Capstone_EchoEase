@@ -1,6 +1,10 @@
 const mongoose=require("mongoose");
 
 const TherapyPlanSchema= new mongoose.Schema({
+    patientName:{
+        type: String,
+        required:true  //Link therapyplan using patientname
+    },
     goals:{
         type: [String],
         required: true
@@ -10,7 +14,7 @@ const TherapyPlanSchema= new mongoose.Schema({
         required: true
     },
     youtubeLinks:{
-        type: [String],   //AUto fetched yt links for activities will pophere
+        type: [String],   //Auto fetched yt links for activities will pophere
         default: []
     },
     createdAt: {
