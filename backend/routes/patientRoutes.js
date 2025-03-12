@@ -3,7 +3,7 @@ const router = express.Router();
 const NewPatient = require("../models/Add-newPatient");  // Correct schema import
 const authMiddleware = require("../middleware/authMiddleware");
 
-// POST: Add a new patient
+//POST: Add a New Patient
 router.post("/", authMiddleware, async (req, res) => {
     try {
         console.log("Request received:", req.body); // Debugging log
@@ -25,16 +25,17 @@ router.post("/", authMiddleware, async (req, res) => {
     }
 });
 
-// GET: Fetch all patients
+//get:Fetch all patients
+
 router.get("/", authMiddleware, (req, res) => {
     NewPatient.find()
         .then(patients => res.json(patients))
         .catch(err => res.status(500).json({ error: "Server Error", err }));
 });
 
-// GET: Fetch a single patient by Name
-router.get("/:patientName", authMiddleware, (req, res) => {
-    NewPatient.findOne({ patientName: { $regex: new RegExp("^"+req.params.patientName+ "$","i")}}) // Match by patientName and (regex for case-sensitive search)
+//GET  fetch a single patient by ID
+router.get("/:patientId", authMiddleware, (req, res) => {
+    NewPatient.findById(req.params.patientId) // 🔹 Now searching by `patientId`
         .then(patient => {
             if (!patient) return res.status(404).json({ error: "Patient not found" });
             res.json(patient);
@@ -42,5 +43,5 @@ router.get("/:patientName", authMiddleware, (req, res) => {
         .catch(err => res.status(500).json({ error: "Server error", err }));
 });
 
-
 module.exports = router;
+

@@ -23,7 +23,8 @@ const PatientListSchema=new mongoose.Schema({
         default: 0
     },
     therapyPlan: {
-        type: mongoose.Schema.Types.ObjectId, ref: "TherapyPlan"
+        type: mongoose.Schema.Types.ObjectId,
+         ref: "TherapyPlan"
     }
 });
 
