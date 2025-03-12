@@ -6,7 +6,7 @@ const authMiddleware = require("../middleware/authMiddleware");
 // POST: Add a new patient
 router.post("/", authMiddleware, async (req, res) => {
     try {
-        console.log("🔹 Request received:", req.body); // Debugging log
+        console.log("Request received:", req.body); // Debugging log
 
         const { patientName, age, nativeLanguage } = req.body;
 
