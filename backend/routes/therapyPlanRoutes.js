@@ -26,7 +26,7 @@ router.post("/", authMiddleware, (req, res) => {
 //GET method to fetch therapy plans for a specific patient
 
 router.get("/:patientId", authMiddleware, (req,res)=>{
-    TherapyPlan.findById({patientId: req.params.patientId})
+    TherapyPlan.find({patientId: req.params.patientId})
     .then(therapyPlans =>{
         if(!therapyPlans || therapyPlans.length === 0) {
             return res.status(404).json({error:"No therapy plans found for this patient"});
