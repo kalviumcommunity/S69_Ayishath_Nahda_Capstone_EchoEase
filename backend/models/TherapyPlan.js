@@ -1,9 +1,10 @@
 const mongoose=require("mongoose");
 
 const TherapyPlanSchema= new mongoose.Schema({
-    patientName:{
-        type: String,
-        required:true  //Link therapyplan using patientname
+    patientId:{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "NewPatient",
+        required:true  
     },
     goals:{
         type: [String],

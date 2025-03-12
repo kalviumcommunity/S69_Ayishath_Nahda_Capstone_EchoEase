@@ -3,6 +3,7 @@ const mongoose=require("mongoose");
 const NewPatientSchema=new mongoose.Schema({
     patientName:{
         type: String,
+
         required:true
     },
     age:{

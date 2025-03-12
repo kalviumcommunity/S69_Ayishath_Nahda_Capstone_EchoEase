@@ -7,10 +7,10 @@ const TherapyPlan = require("../models/TherapyPlan");
 //POST: Add therapy plans for the patient
 
 router.post("/", authMiddleware, (req, res) => {
-    const { patientName,goals, activities, youtubeLinks } = req.body;
+    const { patientId,goals, activities, youtubeLinks } = req.body;
 
     const newPlan = new TherapyPlan({
-        patientName,
+        patientId,  //linking w patient id
         goals,
         activities,
         youtubeLinks // Store AI-generated YouTube links
@@ -25,8 +25,8 @@ router.post("/", authMiddleware, (req, res) => {
 
 //GET method to fetch therapy plans for a specific patient
 
-router.get("/:patientName", authMiddleware, (req,res)=>{
-    TherapyPlan.find({patientName: req.params.patientName})
+router.get("/:patientId", authMiddleware, (req,res)=>{
+    TherapyPlan.findById({patientId: req.params.patientId})
     .then(therapyPlans =>{
         if(!therapyPlans || therapyPlans.length === 0) {
             return res.status(404).json({error:"No therapy plans found for this patient"});
