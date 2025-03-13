@@ -7,28 +7,34 @@ const authMiddleware = require("../middleware/authMiddleware");
 //POST: Add a New Patient
 router.post("/", authMiddleware, async (req, res) => {
     try {
-        console.log("Request received:", req.body); // Debugging log
+        console.log(" Request received:", req.body); // Debugging log
 
         const { patientName, age, nativeLanguage } = req.body;
-        const existingPatient = await Patient.findOne({ patientName, age, nativeLanguage });
-        if (existingPatient) {
-            return res.status(400).json({ error: "Patient already exists", patient: existingPatient });
-        }
 
+        //  Check for missing fields first
         if (!patientName || !age || !nativeLanguage) {
             return res.status(400).json({ error: "All fields are required" });
         }
 
-        const newPatient = new NewPatient({ patientName, age, nativeLanguage });
+        //  Correct duplicate check using `NewPatient` model
+        const existingPatient = await NewPatient.findOne({ patientName, nativeLanguage });
+        if (existingPatient) {
+            return res.status(400).json({ error: "Patient already exists", patient: existingPatient });
+        }
 
+        //  Save the new patient if no duplicate is found
+        const newPatient = new NewPatient({ patientName, age, nativeLanguage });
         await newPatient.save();
-        console.log(" Patient saved successfully:", newPatient); // Debugging log
+
+        console.log(" Patient saved successfully:", newPatient);
         res.status(201).json({ message: "Patient added successfully!", patient: newPatient });
+
     } catch (error) {
-        console.error("Error adding patient:", error); // Debugging log
+        console.error(" Error adding patient:", error);
         res.status(500).json({ error: "Server error" });
     }
 });
+
 
 //get:Fetch all patients
 
