@@ -1,7 +1,7 @@
 const mongoose=require("mongoose");
 
-const PatientSchema=new mongoose.Schema({
-    name: {
+const PatientListSchema=new mongoose.Schema({
+    patientName: {
         type: String,
         required: true
     },
@@ -17,17 +17,16 @@ const PatientSchema=new mongoose.Schema({
         type: String,
         required: true
     },
-    nativeLanguage: {
-        type: String,
-        required: true
+   
+    progress: {
+        type: Number, 
+        default: 0
     },
     therapyPlan: {
-        type: mongoose.Schema.Types.ObjectId, ref: "TherapyPlan"
-    },
-    progress: {
-        type: Number,
-        default: 0
+        type: mongoose.Schema.Types.ObjectId,
+         ref: "TherapyPlan",
+         default: null
     }
 });
 
-module.exports=mongoose.model("Patient",PatientSchema);
+module.exports=mongoose.model("PatientList",PatientListSchema);

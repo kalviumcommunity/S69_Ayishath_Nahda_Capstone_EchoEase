@@ -30,7 +30,7 @@ router.post("/signup", (req, res) => {
       .catch(err => res.status(500).json({ error: "Server error" }));
   });
 
-  //Therapist/Audiologist login
+  //Therapist/Audiologists login route
 
   router.post("/login",(req,res)=>{
     const {name,password}=req.body;
