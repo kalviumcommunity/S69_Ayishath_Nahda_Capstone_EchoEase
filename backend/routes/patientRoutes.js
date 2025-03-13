@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const NewPatient = require("../models/Add-newPatient");  // Correct schema import
+const Patient = require("../models/PatientList");
 const authMiddleware = require("../middleware/authMiddleware");
 
 //POST: Add a New Patient
@@ -9,6 +10,10 @@ router.post("/", authMiddleware, async (req, res) => {
         console.log("Request received:", req.body); // Debugging log
 
         const { patientName, age, nativeLanguage } = req.body;
+        const existingPatient = await Patient.findOne({ patientName, age, nativeLanguage });
+        if (existingPatient) {
+            return res.status(400).json({ error: "Patient already exists", patient: existingPatient });
+        }
 
         if (!patientName || !age || !nativeLanguage) {
             return res.status(400).json({ error: "All fields are required" });
@@ -27,11 +32,16 @@ router.post("/", authMiddleware, async (req, res) => {
 
 //get:Fetch all patients
 
-router.get("/", authMiddleware, (req, res) => {
-    NewPatient.find()
-        .then(patients => res.json(patients))
-        .catch(err => res.status(500).json({ error: "Server Error", err }));
+router.get("/", authMiddleware, async (req, res) => {
+    try {
+        const patients = await NewPatient.find().populate("therapyPlan"); // Populate therapyPlan details
+
+        res.status(200).json(patients);
+    } catch (error) {
+        res.status(500).json({ error: "Error fetching patients", details: error.message });
+    }
 });
+
 
 //GET  fetch a single patient by ID
 router.get("/:patientId", authMiddleware, (req, res) => {
