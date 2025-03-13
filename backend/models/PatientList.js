@@ -1,7 +1,7 @@
 const mongoose=require("mongoose");
 
 const PatientListSchema=new mongoose.Schema({
-    name: {
+    patientName: {
         type: String,
         required: true
     },
@@ -24,7 +24,8 @@ const PatientListSchema=new mongoose.Schema({
     },
     therapyPlan: {
         type: mongoose.Schema.Types.ObjectId,
-         ref: "TherapyPlan"
+         ref: "TherapyPlan",
+         default: null
     }
 });
 
