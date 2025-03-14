@@ -21,11 +21,11 @@ router.post("/signup", async (req, res) => {
             return res.status(400).json({ error: "User already registered with this email" });
         }
 
-        console.log("Raw Password Before Hashing:", password);
+        
 
         //  Hash the password before storing
         const hashedPassword = await bcrypt.hash(password, 10);
-        console.log("Generated Hashed Password:", hashedPassword);
+      
 
         const therapist = new Therapist({
             name,
@@ -59,12 +59,11 @@ router.post("/login", async (req, res) => {
             return res.status(400).json({ error: "User not found" });
         }
 
-        console.log("Stored Hashed Password:", therapist.password);
-        console.log("Entered Password:", password);
+       
 
         //  Compare passwords
         const isMatch = await bcrypt.compare(password, therapist.password);
-        console.log("Password Match Result:", isMatch);
+       
 
         if (!isMatch) {
             return res.status(400).json({ error: "Invalid credentials" });
