@@ -2,10 +2,35 @@ const mongoose = require("mongoose");
 const bcrypt=require("bcryptjs");
 
 const TherapistSchema = new mongoose.Schema({       //therapist/audiologist schema
-  name: { type: String, required: true },
-  designation: { type: String, required: true },
-  hospital: { type: String, required: true },
-  password: { type: String, required: true } //keep this hashed for security
+  name: {
+     type: String, 
+     required: true 
+    },
+  email:{
+    type: String,
+    required: true,
+    unique: true
+  },
+  designation: { 
+    type: String,
+    required: true
+   },
+  hospital: {
+     type: String,
+    required: true
+   },
+  password: { 
+    type: String,
+    required: true
+  },
+  resetOtp:{
+    type:String,
+    default: null
+  },
+  otpExpiry:{
+    type: Date,
+    default: null 
+  }
 });
 
 //Hash password before saving

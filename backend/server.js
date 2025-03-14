@@ -31,4 +31,3 @@ app.use("/api/therapy-plans",therapyPlans);
 app.listen(PORT,()=>{
     console.log(`Server is running on: http://localhost:${PORT}`);    
 });
-
