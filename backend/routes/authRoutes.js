@@ -41,6 +41,7 @@ router.post("/signup", async (req, res) => {
 });
 
 // **Login Route**
+// **Login Route**
 router.post("/login", async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -54,6 +55,11 @@ router.post("/login", async (req, res) => {
 
         if (!therapist) {
             return res.status(400).json({ error: "User not found" });
+        }
+
+        // Explicitly ensure therapist exists before proceeding
+        if (!therapist || !therapist.password) {
+            return res.status(400).json({ error: "Invalid user data" });
         }
 
         const trimmedPassword = password.trim();
@@ -70,7 +76,6 @@ router.post("/login", async (req, res) => {
         res.status(500).json({ error: "Server error", details: error.message });
     }
 });
-
 // **Forgot Password - OTP Generation**
 router.post("/forgot-password", async (req, res) => {
     try {

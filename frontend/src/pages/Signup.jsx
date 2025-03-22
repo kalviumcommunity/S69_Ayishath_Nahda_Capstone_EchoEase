@@ -11,8 +11,8 @@ const Signup = () => {
     hospital: "",
     password: "",
   });
-  const [errorMessage, setErrorMessage] = useState(""); // To store error messages
-  const [successMessage, setSuccessMessage] = useState(""); // To store success messages
+  const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -20,7 +20,22 @@ const Signup = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Signup attempt:", formData);
+    setErrorMessage("");
+    setSuccessMessage("");
+
+    const trimmedFormData = {
+      fullName: formData.fullName.trim(),
+      email: formData.email.trim(),
+      designation: formData.designation,
+      hospital: formData.hospital.trim(),
+      password: formData.password.trim(),
+    };
+    console.log("Signup attempt:", {
+      fullName: trimmedFormData.fullName,
+      email: trimmedFormData.email,
+      designation: trimmedFormData.designation,
+      hospital: trimmedFormData.hospital,
+    });
 
     try {
       const response = await fetch("http://localhost:5000/api/auth/signup", {
@@ -29,11 +44,11 @@ const Signup = () => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          name: formData.fullName, 
-          email: formData.email,
-          designation: formData.designation,
-          hospital: formData.hospital,
-          password: formData.password,
+          name: trimmedFormData.fullName,
+          email: trimmedFormData.email,
+          designation: trimmedFormData.designation,
+          hospital: trimmedFormData.hospital,
+          password: trimmedFormData.password,
         }),
       });
 
@@ -46,9 +61,7 @@ const Signup = () => {
       const data = await response.json();
       console.log("Signup successful:", data);
       setSuccessMessage("Signup successful! Redirecting to login...");
-      setErrorMessage(""); // Clear any previous errors
 
-      // Redirect to login after a short delay
       setTimeout(() => {
         navigate("/login");
       }, 2000);
@@ -60,19 +73,16 @@ const Signup = () => {
   return (
     <div className="flex items-center justify-center min-h-screen bg-[#2D5B64]">
       <div className="bg-[#f2f1ec] p-10 rounded-2xl shadow-lg w-[500px] text-center">
-        {/* Logo */}
         <div className="flex flex-col items-center mb-4">
           <img src="/logo.png" alt="EchoEase Logo" className="w-32 object-contain" />
         </div>
 
-        {/* Success Message */}
         {successMessage && (
           <div className="bg-green-100 text-green-800 p-3 rounded-md mb-4">
             {successMessage}
           </div>
         )}
 
-        {/* Error Message */}
         {errorMessage && (
           <div className="bg-red-100 text-red-800 p-3 rounded-md mb-4">
             {errorMessage}
@@ -80,7 +90,6 @@ const Signup = () => {
         )}
 
         <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-x-4 gap-y-5 text-left">
-          {/* Full Name */}
           <label className="text-gray-700 font-semibold flex items-center">Full Name</label>
           <input
             type="text"
@@ -92,7 +101,6 @@ const Signup = () => {
             required
           />
 
-          {/* Email */}
           <label className="text-gray-700 font-semibold flex items-center">Email</label>
           <input
             type="email"
@@ -104,7 +112,6 @@ const Signup = () => {
             required
           />
 
-          {/* Designation */}
           <label className="text-gray-700 font-semibold flex items-center">Designation</label>
           <select
             name="designation"
@@ -117,7 +124,6 @@ const Signup = () => {
             <option value="Speech Therapist">Speech Therapist</option>
           </select>
 
-          {/* Hospital */}
           <label className="text-gray-700 font-semibold flex items-center">Hospital</label>
           <input
             type="text"
@@ -129,7 +135,6 @@ const Signup = () => {
             required
           />
 
-          {/* Password */}
           <label className="text-gray-700 font-semibold flex items-center">Create Password</label>
           <input
             type="password"
@@ -141,7 +146,6 @@ const Signup = () => {
             required
           />
 
-          {/* Signup Button */}
           <div className="col-span-2 flex flex-col items-center">
             <button
               type="submit"
@@ -150,7 +154,6 @@ const Signup = () => {
               Sign-Up
             </button>
 
-            {/* Already a user? Login */}
             <p className="text-sm mt-4">
               Already a user?{" "}
               <Link to="/login" className="text-[#2D5B64] font-semibold hover:underline">
