@@ -1,33 +1,40 @@
 require('dotenv').config();
-const express=require("express");
-const mongoose=require("mongoose");
-const cors=require("cors");
-const therapistRoutes=require("./routes/therapistRoutes");
+const express = require("express");
+const mongoose = require("mongoose");
+const cors = require("cors");
 
-const PORT=4000;
+const therapistRoutes = require("./routes/therapistRoutes");
+const authRoutes = require("./routes/authRoutes");
+const patientRoutes = require("./routes/patientRoutes");
+const therapyPlansRoutes = require("./routes/therapyPlanRoutes");
 
-const app=express();
+const PORT = process.env.PORT || 5000; // Use environment variable for PORT
+
+const app = express();
 app.use(express.json());
-app.use(cors());
 
+// Allow frontend to communicate with backend
+app.use(cors({
+    origin: "http://localhost:5173", 
+    credentials: true
+}));
 
+// Connect to MongoDB
+mongoose.connect(process.env.MONGODB_URI)
+    .then(() => {
+        console.log("MongoDB connected");
+    })
+    .catch((err) => {
+        console.error(" MongoDB connection error:", err);
+    });
 
-mongoose.connect(process.env.MONGODB_URI).then(()=>{
-    console.log("MongoDB connected");
-}).catch((err)=>{
-    console.log(err);
-});
+// Define Routes
+app.use("/api/auth", authRoutes);
+app.use("/api/therapist", therapistRoutes);
+app.use("/api/patients", patientRoutes);
+app.use("/api/therapy-plans", therapyPlansRoutes);
 
-const authRoutes=require("./routes/authRoutes");
-app.use("/api/auth",authRoutes);
-app.use("/api/therapist",therapistRoutes);
-
-const patientRoutes=require("./routes/patientRoutes");
-app.use("/api/patients",patientRoutes);
-
-const therapyPlans=require("./routes/therapyPlanRoutes");
-app.use("/api/therapy-plans",therapyPlans);
-
-app.listen(PORT,()=>{
-    console.log(`Server is running on: http://localhost:${PORT}`);    
+// Start Server
+app.listen(PORT, () => {
+    console.log(` Server is running on: http://localhost:${PORT}`);
 });
