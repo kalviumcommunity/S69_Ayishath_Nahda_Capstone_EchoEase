@@ -36,16 +36,17 @@ const TherapistSchema = new mongoose.Schema({       //therapist/audiologist sche
 //Hash password before saving
 
 TherapistSchema.pre("save", async function (next) {
-  if(!this.isModified("password")) return next();
-  try{
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
+  if (!this.isModified("password")) return next();
+  try {
+    // Only hash if the password isn’t already hashed
+    if (!this.password.startsWith('$2b$')) {
+      const salt = await bcrypt.genSalt(10);
+      this.password = await bcrypt.hash(this.password, salt);
+    }
     next();
-
-  }catch(err){
+  } catch (err) {
     next(err);
   }
- 
 });
 
 module.exports = mongoose.model("Therapist", TherapistSchema);
