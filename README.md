@@ -217,3 +217,11 @@ Day 28: Final Submission 🎉
 
 ## BACKEND DELPOYED LINK
 https://s69-ayishath-nahda-capstone-echoease.onrender.com
+
+
+## FRONTEND DEPLOYED LINK
+
+https://echoease.netlify.app/
+
+
+
