@@ -31,6 +31,9 @@ app.use("/api/therapist", therapistRoutes);
 app.use("/api/patients", patientRoutes);
 app.use("/api/therapy-plans", therapyPlansRoutes);
 
+app.get("/", (req,res)=>{
+    res.send("<h1>Server is running </h1>")
+})
 // Start Server
 app.listen(PORT, () => {
     console.log(` Server is running on: http://localhost:${PORT}`);
