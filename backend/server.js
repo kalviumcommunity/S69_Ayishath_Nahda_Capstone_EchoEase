@@ -14,10 +14,7 @@ const app = express();
 app.use(express.json());
 
 // Allow frontend to communicate with backend
-app.use(cors({
-    origin: "http://localhost:5173", 
-    credentials: true
-}));
+app.use(cors());
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI)

@@ -2,9 +2,18 @@ const express = require("express");
 const router = express.Router();
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const { body, validationResult } = require("express-validator");
 const Therapist = require("../models/Therapist");
-const transporter = require("../utils/emailConfig");
+// const transporter = require("../utils/otpService");
+const {verifyOTP}=require("../utils/otpService");
+const otpService=require("../utils/otpService");
 const JWT_SECRET = process.env.JWT_SECRET;
+
+// // ** Check if JWT_SECRET is properly set **
+// if (!JWT_SECRET) {
+//     console.error("🚨 Missing JWT_SECRET in environment variables");
+//     process.exit(1); // Stop the server
+// }
 
 // **Signup Route**
 router.post("/signup", async (req, res) => {
@@ -17,6 +26,7 @@ router.post("/signup", async (req, res) => {
 
         const emailLower = email.toLowerCase();
         const existingTherapist = await Therapist.findOne({ email: emailLower });
+
         if (existingTherapist) {
             return res.status(400).json({ error: "User already registered with this email" });
         }
@@ -41,7 +51,6 @@ router.post("/signup", async (req, res) => {
 });
 
 // **Login Route**
-// **Login Route**
 router.post("/login", async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -57,109 +66,90 @@ router.post("/login", async (req, res) => {
             return res.status(400).json({ error: "User not found" });
         }
 
-        // Explicitly ensure therapist exists before proceeding
-        if (!therapist || !therapist.password) {
+        if (!therapist.password) {
             return res.status(400).json({ error: "Invalid user data" });
         }
 
-        const trimmedPassword = password.trim();
-        const isMatch = await bcrypt.compare(trimmedPassword, therapist.password);
+        const isMatch = await bcrypt.compare(password.trim(), therapist.password);
 
         if (!isMatch) {
             return res.status(400).json({ error: "Incorrect password" });
         }
 
         const token = jwt.sign({ id: therapist._id }, JWT_SECRET, { expiresIn: "1h" });
+
         res.json({ message: "Login successful!", token, therapist });
     } catch (error) {
         console.error("🚨 Login Error:", error);
         res.status(500).json({ error: "Server error", details: error.message });
     }
 });
+
 // **Forgot Password - OTP Generation**
-router.post("/forgot-password", async (req, res) => {
-    try {
-        const { email } = req.body;
-
-        if (!email) {
-            return res.status(400).json({ error: "Email is required" });
-        }
-
-        const therapist = await Therapist.findOne({ email });
-        if (!therapist) {
-            return res.status(400).json({ error: "User not found" });
-        }
-
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        const otpExpiry = new Date(Date.now() + 5 * 60 * 1000);
-
-        therapist.resetOtp = otp;
-        therapist.otpExpiry = otpExpiry;
-        await therapist.save();
-
-        const mailOptions = {
-            from: process.env.EMAIL_USER,
-            to: email,
-            subject: "Password Reset OTP - EchoEase",
-            text: `Your OTP for password reset is: ${otp}. It will expire in 5 minutes.`,
-        };
-
-        await transporter.sendMail(mailOptions);
-        res.json({ message: "OTP sent successfully!" });
-    } catch (error) {
-        console.error("🚨 Forgot Password Error:", error);
-        res.status(500).json({ error: "Error sending OTP", details: error.message });
+router.post("/forgot-password", [
+    body("email").isEmail().withMessage("Valid email is required.")
+], async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
     }
+
+    const { email } = req.body;
+    try {
+        const therapist = await Therapist.findOne({ email });
+        if (!therapist) return res.status(404).json({ message: "Therapist not found." });
+
+        const otp = otpService.generateOTP();
+        otpService.sendOTP(email, otp);
+        otpService.storeOTP(email, otp);
+        
+        return res.status(200).json({ message: "OTP sent successfully." });
+    } catch (err) {
+        console.error("Forgot Password Error:", err);
+        return res.status(500).json({ message: "Server error." });
+    }
 });
 
+
 // **Verify OTP**
-router.post("/verify-otp", async (req, res) => {
+router.post("/verify-reset-otp", async (req, res) => {
+    const { email, otp } = req.body;
+
     try {
-        const { email, otp } = req.body;
-
-        const therapist = await Therapist.findOne({ email });
-        if (!therapist || therapist.resetOtp !== otp) {
-            return res.status(400).json({ error: "Invalid OTP or expired" });
+        const isValid = verifyOTP(email, otp);
+        if (!isValid) {
+            return res.status(400).json({ message: "Invalid or expired OTP" });
         }
 
-        if (therapist.otpExpiry < new Date()) {
-            return res.status(400).json({ error: "OTP expired" });
-        }
-
-        therapist.resetOtp = null;
-        therapist.otpExpiry = null;
-        await therapist.save();
-
-        res.json({ message: "OTP verified successfully!" });
+        return res.json({ message: "OTP verified successfully" });
     } catch (error) {
-        console.error("🚨 OTP Verification Error:", error);
-        res.status(500).json({ error: "Server error", details: error.message });
-    }
+        console.error("Error verifying OTP:", error);
+        return res.status(500).json({ message: "Server error" }); }
 });
 
 // **Reset Password**
 router.post("/reset-password", async (req, res) => {
+    const { email, newPassword } = req.body;
+
     try {
-        const { email, newPassword } = req.body;
-
-        if (!email || !newPassword) {
-            return res.status(400).json({ error: "Email and new password are required" });
-        }
-
         const therapist = await Therapist.findOne({ email });
         if (!therapist) {
-            return res.status(400).json({ error: "User not found" });
+            return res.status(404).json({ message: "User not found" });
         }
 
-        const hashedPassword = await bcrypt.hash(newPassword, 10);
-        therapist.password = hashedPassword;
+        // Hash new password
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
 
+        // Update user's password
+        therapist.password = hashedPassword;
         await therapist.save();
-        res.json({ message: "Password reset successfully!" });
+
+        return res.json({ message: "Password reset successfully" });
     } catch (error) {
-        console.error("🚨 Reset Password Error:", error);
-        res.status(500).json({ error: "Error resetting password", details: error.message });
-    }
+        console.error("Error resetting password:", error);
+        return res.status(500).json({ message: "Server error" });
+    }
 });
 
 module.exports = router;
