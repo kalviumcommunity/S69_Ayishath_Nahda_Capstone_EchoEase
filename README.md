@@ -215,3 +215,5 @@ Day 28: Final Submission 🎉
  Deploy final version, record demo video, and submit capstone project.
 
 
+## BACKEND DELPOYED LINK
+https://s69-ayishath-nahda-capstone-echoease.onrender.com
