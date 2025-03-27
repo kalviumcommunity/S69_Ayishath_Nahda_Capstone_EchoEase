@@ -3,6 +3,21 @@ const router = express.Router();
 const Therapist = require("../models/Therapist");
 const authMiddleware = require("../middleware/authMiddleware");
 
+//Fetch therapist details using token
+
+router.get("/", authMiddleware, async (req, res) => {
+    try {
+      const therapist = await Therapist.findById(req.user.id).select("-password"); // Exclude password
+      if (!therapist) {
+        return res.status(404).json({ message: "Therapist not found" });
+      }
+      res.json(therapist);
+    } catch (error) {
+      console.error("Error fetching therapist:", error);
+      res.status(500).json({ message: "Server error" });
+    }
+  });
+
 // GET Therapist/Audiologist Profile
 router.get("/profile", authMiddleware, async (req, res) => {
     try {
