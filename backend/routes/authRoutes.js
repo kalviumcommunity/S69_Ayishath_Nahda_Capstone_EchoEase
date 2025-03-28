@@ -15,7 +15,7 @@ const JWT_SECRET = process.env.JWT_SECRET;
 //     process.exit(1); // Stop the server
 // }
 
-// **Signup Route**
+// **Signup Route**        //db write
 router.post("/signup", async (req, res) => {
     try {
         const { name, email, designation, hospital, password } = req.body;

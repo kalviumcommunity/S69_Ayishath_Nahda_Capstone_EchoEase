@@ -4,7 +4,7 @@ const NewPatient = require("../models/Add-newPatient");  // Correct schema impor
 const Patient = require("../models/PatientList");
 const authMiddleware = require("../middleware/authMiddleware");
 
-//POST: Add a New Patient
+//POST: Add a New Patient   //write db
 router.post("/", authMiddleware, async (req, res) => {
     try {
         console.log(" Request received:", req.body); // Debugging log
@@ -37,7 +37,7 @@ router.post("/", authMiddleware, async (req, res) => {
 
 
 //get:Fetch all patients
-
+ // read db
 router.get("/", authMiddleware, async (req, res) => {
     try {
         const patients = await NewPatient.find().populate("therapyPlan"); // Populate therapyPlan details
