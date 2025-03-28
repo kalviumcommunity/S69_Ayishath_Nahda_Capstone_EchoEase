@@ -1,0 +1,24 @@
+meta {
+  name: post1
+  type: http
+  seq: 6
+}
+
+post {
+  url: http://localhost:4000/api/patients
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3Y2VjMTc2MWMyMGMxYmUwOGJiNTliYiIsImlhdCI6MTc0MTg1NDgxNSwiZXhwIjoxNzQxODU4NDE1fQ.1JPj97izppt3v9WsBI_SlsnLULeBqRsg9eheTM3t97E
+}
+
+body:json {
+  {
+      "patientName": "John Doe",
+      "age": 8,
+      "nativeLanguage": "English"
+  }
+  
+}

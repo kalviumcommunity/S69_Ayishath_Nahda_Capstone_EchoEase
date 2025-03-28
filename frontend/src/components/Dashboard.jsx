@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -32,52 +31,62 @@ const Dashboard = () => {
     fetchTherapist();
   }, []);
 
-  return (
-    <>
-      <link
-        href="https://fonts.googleapis.com/css2?family=Lisu+Bosa:ital,wght@0,400;0,700;1,400;1,900&display=swap"
-        rel="stylesheet"
-      />
-      <div className="relative w-full min-h-screen bg-gray-100">
-        {/* Navbar */}
-        <Navbar />
 
-        {/* Background Image with Overlay */}
-        <div className="absolute inset-0">
-          <img
-            src="/dashboardbg.jpeg"
-            alt="Dashboard background"
-            className="object-cover w-full h-full"
-          />
-          <div className="absolute inset-0  bg-[#2C4A52] bg-opacity-30"></div>
-        </div>
+return (
+  <div className="min-h-screen bg-[#D9D9D9] flex flex-col">
+    {/* Header Section */}
+    <header className="bg-[#D9D9D9] shadow-sm p-2 flex justify-between items-center h-15"> 
+      <div className="flex items-center">
+        <img
+          src="/logo.png" 
+          alt="EchoEase Logo"
+          className="h-20 mr-3 object-contain" 
+        />
 
-        {/* Main Content */}
-        <main className="relative flex flex-col items-center justify-center min-h-screen">
-          {/* Title */}
-          <h1 className="text-5xl font-bold text-white mb-9 mt-9 max-md:text-4xl max-sm:text-3xl">
-            {loading ? "Loading..." : `${therapistName}'s Dashboard`}
-          </h1>
-
-          {/* Action Buttons */}
-          <div className="flex gap-12 max-md:flex-wrap max-sm:flex-col max-sm:gap-5">
-            <button
-              onClick={() => navigate("/add-patient")}
-              className="text-2xl italic text-white bg-[#D9D9D9] bg-opacity-50 border border-white border-opacity-50 rounded-lg px-10 py-8 shadow-md transition-all duration-300 hover:bg-opacity-60 hover:scale-105"
-            >
-              Add New Patient
-            </button>
-            <button
-              onClick={() => navigate("/view-patients")}
-              className="text-2xl italic text-white bg-[#D9D9D9] bg-opacity-50 border border-white border-opacity-50 rounded-lg px-10 py-8 shadow-md transition-all duration-300 hover:bg-opacity-60 hover:scale-105"
-            >
-              View Patients
-            </button>
-          </div>
-        </main>
       </div>
-    </>
-  );
-};
+      <div className="text-lg font-bold text-gray-800">
+        {loading ? "Loading..." : `${therapistName}'s Dashboard`}
+      </div>
+      <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center overflow-hidden">
+        <img
+          src="/user.png" 
+          alt="User Profile"
+          className="w-full h-full object-cover"
+        />
+      </div>
+    </header>
+
+    {/* Main Content */}
+    <main
+      className="flex-1 flex items-center justify-center bg-cover bg-center relative"
+      style={{
+        backgroundImage: `url('https://i.pinimg.com/736x/11/36/22/1136225d739b320c6323289af7aa37a8.jpg')`,
+      }}
+    >
+      {/* Overlay for Background Tint */}
+      <div className="absolute inset-0 bg-[#365B6D] opacity-75"></div>
+
+      {/* Buttons Container */}
+      <div className="relative flex space-x-6 z-10">
+        {/* Add New Patient Button */}
+        <button
+          onClick={() => navigate("/add-patient")} // Adjust the route as needed
+          className="bg-[#D9D9D9] bg-opacity-50 text-gray-800 font-semibold text-xl py-6 px-10 rounded-lg shadow-[0_4px_6px_rgba(0,0,0,0.1)] hover:bg-opacity-70 hover:scale-105 hover:shadow-[0_6px_12px_rgba(0,0,0,0.15)] transition-all duration-300 ease-in-out"
+        >
+          Add New Patient
+        </button>
+
+        {/* View Patients Button */}
+        <button
+          onClick={() => navigate("/view-patients")} // Adjust the route as needed
+          className="bg-[#D9D9D9] bg-opacity-50 text-gray-800 font-semibold text-xl py-6 px-10 rounded-lg shadow-[0_4px_6px_rgba(0,0,0,0.1)] hover:bg-opacity-70 hover:scale-105 hover:shadow-[0_6px_12px_rgba(0,0,0,0.15)] transition-all duration-300 ease-in-out"
+        >
+          View Patients
+        </button>
+      </div>
+    </main>
+  </div>
+);
+  };
 
 export default Dashboard;

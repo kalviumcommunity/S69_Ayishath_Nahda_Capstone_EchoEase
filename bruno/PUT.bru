@@ -1,0 +1,24 @@
+meta {
+  name: PUT
+  type: http
+  seq: 4
+}
+
+put {
+  url: http://localhost:4000/api/therapist/profile
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3Y2VjMTc2MWMyMGMxYmUwOGJiNTliYiIsImlhdCI6MTc0MTg0NTQzNCwiZXhwIjoxNzQxODQ5MDM0fQ.R17Kea7l7hL6VCMdqa1GOeOa9PeZewxwO4VTHDva3qQ
+}
+
+body:json {
+  {
+    "name": "Sarah Thomas",
+    "designation": "Audiologist",
+    "hospital": "l",
+    "profilePic": "https://img.freepik.com/free-photo/closeup-young-female-professional-making-eye-contact-against-colored-background_662251-651.jpg"
+  }
+}
