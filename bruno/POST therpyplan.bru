@@ -1,0 +1,25 @@
+meta {
+  name: POST therpyplan
+  type: http
+  seq: 9
+}
+
+post {
+  url: http://localhost:4000/api/therapy-plans
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3Y2VjMTc2MWMyMGMxYmUwOGJiNTliYiIsImlhdCI6MTc0MTg0NTQzNCwiZXhwIjoxNzQxODQ5MDM0fQ.R17Kea7l7hL6VCMdqa1GOeOa9PeZewxwO4VTHDva3qQ
+}
+
+body:json {
+  {
+      "patientId": "67d14950ede80d74a7e03e78",
+      "goals": ["Improve communication", "Enhance motor skills"],
+      "activities": ["Speech therapy", "Sensory activities"],
+      "youtubeLinks": ["https://youtube.com/example"]
+  }
+  
+}

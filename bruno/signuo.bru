@@ -1,0 +1,25 @@
+meta {
+  name: signuo
+  type: http
+  seq: 11
+}
+
+post {
+  url: http://localhost:5000/api/auth/signup
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "arza",
+    "email": "abc@gmail.com",
+    "designation": "Speech Therapist",
+    "hospital": "abc12",
+    "password": "arza123@"
+  }
+}
