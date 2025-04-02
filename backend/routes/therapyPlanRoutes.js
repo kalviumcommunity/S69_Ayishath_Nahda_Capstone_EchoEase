@@ -1,94 +1,77 @@
+// routes/therapyPlanRoutes.js
 const express = require("express");
-const mongoose=require("mongoose");
 const router = express.Router();
-const NewPatient = require("../models/Add-newPatient"); // Ensure correct path
-
-const Patient = require("../models/PatientList");
-const authMiddleware = require("../middleware/authMiddleware"); 
+const authMiddleware = require("../middleware/authMiddleware");
 const TherapyPlan = require("../models/TherapyPlan");
+const NewPatient = require("../models/Add-newPatient");
+const { generateTherapyPlanWithGemini, fetchYouTubeLinks } = require("../utils/aiUtils");
+const { generateTherapyPlanHandler } = require("../controllers/therapyPlanControllers");
 
-//POST: Add therapy plans for the patient
+// Route for generating therapy goals and activities
+router.post("/generate", generateTherapyPlanHandler);
+
+// Assign AI-Generated Therapy Plan & Fetch YouTube Links
 router.post("/", authMiddleware, async (req, res) => {
-    try {
-        const { patientId, goals, activities, youtubeLinks } = req.body;
+  try {
+    const { patientId } = req.body;
+    const patient = await NewPatient.findById(patientId);
+    if (!patient) return res.status(404).json({ error: "Patient not found" });
 
-        // Validate patient existence
-        const patientExists = await NewPatient.findById(patientId);
-        if (!patientExists) {
-            return res.status(404).json({ error: "Patient not found in database" });
-        }
+    // Generate therapy plan using Gemini AI
+    const { goals, activities } = await generateTherapyPlanWithGemini(patient.age, patient.diagnosis);
 
-        const newPlan = new TherapyPlan({
-            patientId,
-            goals,
-            activities,
-            youtubeLinks
-        });
-
-        const savedPlan = await newPlan.save();
-
-        // Update the patient's therapyPlan field
-        patientExists.therapyPlan = savedPlan._id;
-        await patientExists.save();
-
-        res.status(201).json({ message: "Therapy plan added successfully!", therapyPlan: savedPlan });
-
-    } catch (err) {
-        console.error("Error adding therapy plan:", err);
-        res.status(500).json({ error: "Server error" });
+    if (goals.length === 0 || activities.length === 0) {
+      return res.status(500).json({
+        message: "Failed to generate therapy plan.",
+        details: "The Gemini AI API may have failed to generate content.",
+      });
     }
+
+    const youtubeLinks = await fetchYouTubeLinks(activities);
+
+    const newPlan = new TherapyPlan({ patientId, goals, activities, youtubeLinks });
+    const savedPlan = await newPlan.save();
+
+    // Linking the therapy plan to the patient
+    patient.therapyPlan = savedPlan._id;
+    await patient.save();
+
+    res.status(201).json({ 
+      message: "Therapy plan added successfully!", 
+      therapyPlan: savedPlan 
+    });
+  } catch (error) {
+    console.error("Error adding therapy plan:", error);
+    res.status(500).json({ 
+      error: "Server error", 
+      details: error.message 
+    });
+  }
 });
 
-
-
-//GET method to fetch therapy plans for a specific patient
-
-router.get("/:patientId", authMiddleware, (req,res)=>{
-    TherapyPlan.find({patientId: req.params.patientId})
-    .then(therapyPlans =>{
-        if(!therapyPlans || therapyPlans.length === 0) {
-            return res.status(404).json({error:"No therapy plans found for this patient"});
-        }
-        res.json(therapyPlans);
-    })
-    .catch(err =>res.status(500).json({error:"Server error",err}));
-});
-
-
-
-
-//PUT Method to update or make eidts to the goals n activites
-
+// Update Therapy Plan (PUT route) - unchanged
 router.put("/:patientId", authMiddleware, async (req, res) => {
-    try {
-        const { goals, activities, youtubeLinks } = req.body;
+  try {
+    const { patientId } = req.params;
+    const updatedPlan = req.body;
 
-        const updatedPlan = await TherapyPlan.findOneAndUpdate(
-            { patientId: req.params.patientId },  // Find by patientId
-            { $set: { goals, activities, youtubeLinks } }, // Update the fields
-            { new: true } // Return the updated document
-        );
+    const result = await TherapyPlan.findOneAndUpdate(
+      { patientId },
+      updatedPlan,
+      { new: true }
+    );
 
-        if (!updatedPlan) {
-            return res.status(404).json({ error: "Therapy plan not found" });
-        }
-
-        res.json({ message: "Therapy plan updated successfully!", therapyPlan: updatedPlan });
-    } catch (error) {
-        console.error("Error updating therapy plan:", error);
-        res.status(500).json({ error: "Server error" });
+    if (result) {
+      res.status(200).json(result);
+    } else {
+      res.status(404).json({ message: "Therapy plan not found" });
     }
+  } catch (err) {
+    res.status(500).json({ 
+      message: "Server error", 
+      details: err.message 
+    });
+  }
 });
 
-//  GET: Fetch all therapy plans
-router.get("/", authMiddleware, async (req, res) => {
-    try {
-        const therapyPlans = await TherapyPlan.find();
-        res.status(200).json(therapyPlans);
-    } catch (error) {
-        res.status(500).json({ error: "Server error", details: error.message });
-    }
-});
-
-
-module.exports=router;
+module.exports = router;

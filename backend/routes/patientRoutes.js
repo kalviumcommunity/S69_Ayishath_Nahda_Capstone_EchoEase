@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const NewPatient = require("../models/Add-newPatient");  // Correct schema import
-const Patient = require("../models/PatientList");
+
 const authMiddleware = require("../middleware/authMiddleware");
 
 //POST: Add a New Patient

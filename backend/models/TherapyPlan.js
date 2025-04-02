@@ -1,12 +1,12 @@
-const mongoose=require("mongoose");
+const mongoose = require("mongoose");
 
-const TherapyPlanSchema= new mongoose.Schema({
-    patientId:{
+const TherapyPlanSchema = new mongoose.Schema({
+    patientId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "NewPatient",
-        required:true  
+        required: true
     },
-    goals:{
+    goals: {
         type: [String],
         required: true
     },
@@ -14,9 +14,13 @@ const TherapyPlanSchema= new mongoose.Schema({
         type: [String],
         required: true
     },
-    youtubeLinks:{
-        type: [String],   //Auto fetched yt links for activities will pophere
+    youtubeLinks: {
+        type: [String],   // Auto-fetched YouTube links for activities
         default: []
+    },
+    aiGenerated: {
+        type: Boolean,  // Flag to check if AI generated this plan
+        default: false
     },
     createdAt: {
         type: Date,
@@ -24,4 +28,4 @@ const TherapyPlanSchema= new mongoose.Schema({
     }
 });
 
-module.exports=mongoose.model('TherapyPlan',TherapyPlanSchema);
+module.exports = mongoose.model("TherapyPlan", TherapyPlanSchema);

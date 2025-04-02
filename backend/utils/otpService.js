@@ -49,7 +49,7 @@ const sendOTP = async (email, otp) => {
         const mailOptions = {
             from: `"EchoEase" <${process.env.SMTP_EMAIL}>`, // Customize sender name
             to: email,
-            subject: "Your OTP Code for TrackMate",
+            subject: "Your OTP Code for EchoEase",
             text: `Your OTP code is: ${otp}. It expires in 10 minutes.`,
             html: `<p>Your OTP code is: <strong>${otp}</strong>. It expires in 10 minutes.</p>`, // Optional: Add HTML version
         };
