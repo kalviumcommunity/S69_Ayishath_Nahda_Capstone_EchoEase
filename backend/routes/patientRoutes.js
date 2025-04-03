@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const NewPatient = require("../models/Add-newPatient");  // Correct schema import
-const Patient = require("../models/PatientList");
+
 const authMiddleware = require("../middleware/authMiddleware");
 
 //POST: Add a New Patient   //write db
@@ -36,18 +36,61 @@ router.post("/", authMiddleware, async (req, res) => {
 });
 
 
+
+
+// GET: Fetch all patients with sorting, filtering and pagination
+
 //get:Fetch all patients
- // read db
+
 router.get("/", authMiddleware, async (req, res) => {
     try {
-        const patients = await NewPatient.find().populate("therapyPlan"); // Populate therapyPlan details
-
-        res.status(200).json(patients);
+      const { search, sortBy, sortOrder, page = 1, limit = 10 } = req.query;
+      
+      // Build query
+      const query = {};
+      if (search) {
+        query.$or = [
+          { patientName: { $regex: search, $options: 'i' } },
+          { diagnosis: { $regex: search, $options: 'i' } },
+          { nativeLanguage: { $regex: search, $options: 'i' } }
+        ];
+      }
+  
+      // Build sort
+      const sort = {};
+      if (sortBy) {
+        sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
+      } else {
+        sort.createdAt = -1; // Default sort by newest first
+      }
+  
+      // Execute query with pagination
+      const patients = await NewPatient.find(query)
+        .populate("therapyPlan")
+        .sort(sort)
+        .limit(parseInt(limit))
+        .skip((parseInt(page) - 1) * parseInt(limit));
+  
+      const total = await NewPatient.countDocuments(query);
+  
+      res.status(200).json({
+        success: true,
+        data: patients,
+        pagination: {
+          total,
+          page: parseInt(page),
+          limit: parseInt(limit),
+          totalPages: Math.ceil(total / parseInt(limit))
+        }
+      });
     } catch (error) {
-        res.status(500).json({ error: "Error fetching patients", details: error.message });
+      res.status(500).json({ 
+        success: false,
+        error: "Error fetching patients", 
+        details: error.message 
+      });
     }
-});
-
+  });
 
 //GET  fetch a single patient by ID
 router.get("/:patientId", authMiddleware, (req, res) => {

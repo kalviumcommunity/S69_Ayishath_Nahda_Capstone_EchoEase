@@ -24,7 +24,7 @@ const PatientListSchema=new mongoose.Schema({
     },
     therapyPlan: {
         type: mongoose.Schema.Types.ObjectId,
-         ref: "TherapyPlan",
+         ref: "TherapyPlan",  //reference linked to therapylan
          default: null
     }
 });

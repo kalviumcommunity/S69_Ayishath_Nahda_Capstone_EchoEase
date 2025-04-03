@@ -1,94 +1,119 @@
 const express = require("express");
-const mongoose=require("mongoose");
 const router = express.Router();
-const NewPatient = require("../models/Add-newPatient"); // Ensure correct path
-
-const Patient = require("../models/PatientList");
-const authMiddleware = require("../middleware/authMiddleware"); 
+const authMiddleware = require("../middleware/authMiddleware");
 const TherapyPlan = require("../models/TherapyPlan");
+const NewPatient = require("../models/Add-newPatient");
+const { generateTherapyPlanWithGemini, fetchYouTubeLinks } = require("../utils/aiUtils");
+const { generateTherapyPlanHandler } = require("../controllers/therapyPlanControllers");
 
-//POST: Add therapy plans for the patient
+// Generate therapy plan content (AI)
+router.post("/generate", generateTherapyPlanHandler);
+
+// Create new therapy plan
 router.post("/", authMiddleware, async (req, res) => {
-    try {
-        const { patientId, goals, activities, youtubeLinks } = req.body;
-
-        // Validate patient existence
-        const patientExists = await NewPatient.findById(patientId);
-        if (!patientExists) {
-            return res.status(404).json({ error: "Patient not found in database" });
-        }
-
-        const newPlan = new TherapyPlan({
-            patientId,
-            goals,
-            activities,
-            youtubeLinks
-        });
-
-        const savedPlan = await newPlan.save();
-
-        // Update the patient's therapyPlan field
-        patientExists.therapyPlan = savedPlan._id;
-        await patientExists.save();
-
-        res.status(201).json({ message: "Therapy plan added successfully!", therapyPlan: savedPlan });
-
-    } catch (err) {
-        console.error("Error adding therapy plan:", err);
-        res.status(500).json({ error: "Server error" });
+  try {
+    const { patientId } = req.body;
+    const patient = await NewPatient.findById(patientId);
+    if (!patient) {
+      return res.status(404).json({ 
+        error: "Patient not found",
+        details: `Patient with ID ${patientId} not found`
+      });
     }
-});
 
+    const { goals, activities } = await generateTherapyPlanWithGemini(patient.age, patient.diagnosis);
 
-
-//GET method to fetch therapy plans for a specific patient
-
-router.get("/:patientId", authMiddleware, (req,res)=>{
-    TherapyPlan.find({patientId: req.params.patientId})
-    .then(therapyPlans =>{
-        if(!therapyPlans || therapyPlans.length === 0) {
-            return res.status(404).json({error:"No therapy plans found for this patient"});
-        }
-        res.json(therapyPlans);
-    })
-    .catch(err =>res.status(500).json({error:"Server error",err}));
-});
-
-
-
-
-//PUT Method to update or make eidts to the goals n activites
-
-router.put("/:patientId", authMiddleware, async (req, res) => {
-    try {
-        const { goals, activities, youtubeLinks } = req.body;
-
-        const updatedPlan = await TherapyPlan.findOneAndUpdate(
-            { patientId: req.params.patientId },  // Find by patientId
-            { $set: { goals, activities, youtubeLinks } }, // Update the fields
-            { new: true } // Return the updated document
-        );
-
-        if (!updatedPlan) {
-            return res.status(404).json({ error: "Therapy plan not found" });
-        }
-
-        res.json({ message: "Therapy plan updated successfully!", therapyPlan: updatedPlan });
-    } catch (error) {
-        console.error("Error updating therapy plan:", error);
-        res.status(500).json({ error: "Server error" });
+    if (!goals?.length || !activities?.length) {
+      return res.status(500).json({
+        message: "Failed to generate therapy plan content",
+        details: "AI service returned empty goals or activities"
+      });
     }
+
+    const youtubeLinks = await fetchYouTubeLinks(activities);
+    const newPlan = new TherapyPlan({ 
+      patientId, 
+      patientName: patient.patientName, // Include patient name
+      age: patient.age,
+      diagnosis: patient.diagnosis,
+      goals, 
+      activities, 
+      youtubeLinks 
+    });
+
+    const savedPlan = await newPlan.save();
+    patient.therapyPlan = savedPlan._id;
+    await patient.save();
+
+    res.status(201).json({ 
+      status: "success",
+      message: "Therapy plan created successfully",
+      data: savedPlan
+    });
+
+  } catch (error) {
+    console.error("Error creating therapy plan:", error);
+    res.status(500).json({ 
+      status: "error",
+      message: "Failed to create therapy plan",
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
 });
 
-//  GET: Fetch all therapy plans
-router.get("/", authMiddleware, async (req, res) => {
-    try {
-        const therapyPlans = await TherapyPlan.find();
-        res.status(200).json(therapyPlans);
-    } catch (error) {
-        res.status(500).json({ error: "Server error", details: error.message });
+// Get therapy plan by patient ID
+router.get("/patient/:patientId", authMiddleware, async (req, res) => {
+  try {
+    const plan = await TherapyPlan.findOne({ patientId: req.params.patientId }).populate("patientId");
+    if (!plan) {
+      return res.status(404).json({ 
+        status: "error",
+        message: "Therapy plan not found",
+        details: `No plan found for patient ${req.params.patientId}`
+      });
     }
+    res.status(200).json({
+      status: "success",
+      data: plan
+    });
+  } catch (error) {
+    console.error("Error fetching therapy plan:", error);
+    res.status(500).json({ 
+      status: "error",
+      message: "Failed to fetch therapy plan",
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
 });
 
+// Update therapy plan
+router.put("/:id", authMiddleware, async (req, res) => {
+  try {
+    const updatedPlan = await TherapyPlan.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true, runValidators: true }
+    );
 
-module.exports=router;
+    if (!updatedPlan) {
+      return res.status(404).json({
+        status: "error",
+        message: "Therapy plan not found"
+      });
+    }
+
+    res.status(200).json({
+      status: "success",
+      data: updatedPlan
+    });
+  } catch (error) {
+    console.error("Error updating therapy plan:", error);
+    res.status(500).json({ 
+      status: "error",
+      message: "Failed to update therapy plan",
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
+module.exports = router;
