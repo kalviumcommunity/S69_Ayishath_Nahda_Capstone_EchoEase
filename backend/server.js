@@ -10,7 +10,9 @@ const authRoutes = require("./routes/authRoutes");
 const patientRoutes = require("./routes/patientRoutes");
 const therapyPlansRoutes = require("./routes/therapyPlanRoutes");
 
+
 const PORT = process.env.PORT || 5000;
+
 
 const app = express();
 app.use(express.json());
