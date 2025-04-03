@@ -64,7 +64,7 @@ router.post("/", authMiddleware, async (req, res) => {
 // Get therapy plan by patient ID
 router.get("/patient/:patientId", authMiddleware, async (req, res) => {
   try {
-    const plan = await TherapyPlan.findOne({ patientId: req.params.patientId });
+    const plan = await TherapyPlan.findOne({ patientId: req.params.patientId }).populate("patientId");
     if (!plan) {
       return res.status(404).json({ 
         status: "error",
