@@ -33,7 +33,7 @@ const ResetPassword = () => {
   
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-[#2C4A52]">
+    <div className="flex justify-center items-center min-h-screen bg-[#2C4A52]">``
       <form className="bg-[#E3E3E3] p-12 rounded-lg shadow-lg w-[600px] text-center relative" onSubmit={handleResetPassword}>
         {/* Logo in Top Right */}
         <img src="/logo.png" alt="EchoEase Logo" className="absolute top-0 right-0 h-24" />
