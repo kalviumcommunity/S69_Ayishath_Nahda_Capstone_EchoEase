@@ -7,31 +7,47 @@ const authMiddleware = require("../middleware/authMiddleware");
 //POST: Add a New Patient   //write db
 router.post("/", authMiddleware, async (req, res) => {
     try {
-        console.log(" Request received:", req.body); // Debugging log
+        console.log("Request received:", req.body); // Debugging log
 
-        const { patientName, age, nativeLanguage } = req.body;
+        const { patientName, age, nativeLanguage, diagnosis } = req.body;
 
-        //  Check for missing fields first
-        if (!patientName || !age || !nativeLanguage) {
-            return res.status(400).json({ error: "All fields are required" });
+        // Check for missing fields
+        if (!patientName || !age || !nativeLanguage || !diagnosis) {
+            return res.status(400).json({ 
+                error: "All fields (patientName, age, nativeLanguage, diagnosis) are required" 
+            });
         }
 
-        //  Correct duplicate check using `NewPatient` model
+        // Check for duplicate patient
         const existingPatient = await NewPatient.findOne({ patientName, nativeLanguage });
         if (existingPatient) {
-            return res.status(400).json({ error: "Patient already exists", patient: existingPatient });
+            return res.status(400).json({ 
+                error: "Patient already exists", 
+                patient: existingPatient 
+            });
         }
 
-        //  Save the new patient if no duplicate is found
-        const newPatient = new NewPatient({ patientName, age, nativeLanguage });
+        // Save the new patient
+        const newPatient = new NewPatient({ 
+            patientName, 
+            age, 
+            nativeLanguage, 
+            diagnosis 
+        });
         await newPatient.save();
 
-        console.log(" Patient saved successfully:", newPatient);
-        res.status(201).json({ message: "Patient added successfully!", patient: newPatient });
+        console.log("Patient saved successfully:", newPatient);
+        res.status(201).json({ 
+            message: "Patient added successfully!", 
+            patient: newPatient 
+        });
 
     } catch (error) {
-        console.error(" Error adding patient:", error);
-        res.status(500).json({ error: "Server error" });
+        console.error("Error adding patient:", error);
+        res.status(500).json({ 
+            error: "Server error", 
+            details: error.message 
+        });
     }
 });
 

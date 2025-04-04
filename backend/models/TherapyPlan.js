@@ -6,26 +6,22 @@ const TherapyPlanSchema = new mongoose.Schema({
         ref: "NewPatient",
         required: true
     },
-    goals: {
-        type: [String],
-        required: true
-    },
-    activities: {
-        type: [String],
-        required: true
-    },
-    youtubeLinks: {
-        type: [String],   // Auto-fetched YouTube links for activities
-        default: []
-    },
+    patientName: String,
+    diagnosis: String,
+    goals: [String],
+    activities: [{
+        name: String,
+        videos: [{
+            title: String,
+            url: String,
+            thumbnail: String
+        }]
+    }],
+    youtubeLinks: [String],
     aiGenerated: {
-        type: Boolean,  // Flag to check if AI generated this plan
+        type: Boolean,
         default: false
-    },
-    createdAt: {
-        type: Date,
-        default: Date.now
     }
-});
+}, { timestamps: true });
 
 module.exports = mongoose.model("TherapyPlan", TherapyPlanSchema);

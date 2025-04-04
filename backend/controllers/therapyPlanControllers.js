@@ -1,94 +1,95 @@
+const { getTherapyPlan } = require("../data/therapyPlansData");
+const TherapyPlan = require("../models/TherapyPlan");
+const NewPatient = require("../models/Add-newPatient");
 
-const { generateTherapyPlanWithGemini, fetchYouTubeLinks } = require("../utils/aiUtils");
-const generateTherapyPlanHandler = async (req, res) => {
-    const { age, diagnosis } = req.body;
-  
-    // Enhanced input validation
-    if (!age || !diagnosis) {
-      return res.status(400).json({ 
-        message: "Missing required fields",
-        details: age ? "Diagnosis is required" : "Age is required",
-        field: age ? "diagnosis" : "age"
+async function createTherapyPlan(req, res) {
+  try {
+    const { patientId } = req.body;
+    console.log("Received patientId:", patientId);
+
+    // 1. Get patient
+    const patient = await NewPatient.findById(patientId)
+      .select('patientName age diagnosis nativeLanguage therapyPlan')
+      .lean();
+    console.log("Found patient:", patient);
+
+    if (!patient) {
+      return res.status(404).json({ 
+        status: "error",
+        message: "Patient not found",
+        patientId
       });
     }
-  
-    if (typeof age !== "number" || age <= 0 || age > 18) {
-      return res.status(400).json({ 
-        message: "Invalid age value",
-        details: "Age must be a positive number between 1 and 18",
-        received: age
+
+    // Check if diagnosis exists
+    if (!patient.diagnosis) {
+      return res.status(400).json({
+        status: "error",
+        message: "Patient is missing a diagnosis",
+        patientId
       });
     }
-  
-    if (typeof diagnosis !== "string" || diagnosis.trim().length < 3) {
-      return res.status(400).json({ 
-        message: "Invalid diagnosis",
-        details: "Diagnosis must be a string with at least 3 characters",
-        received: diagnosis
+
+    // 2. Generate plan data
+    const planData = await getTherapyPlan(
+      patient.diagnosis.toLowerCase(),
+      patient.age,
+      patient.nativeLanguage || 'en'
+    );
+    console.log("Generated planData:", planData);
+
+    if (!planData) {
+      return res.status(404).json({
+        status: "error",
+        message: "No plan template found for this diagnosis/age",
+        diagnosis: patient.diagnosis,
+        age: patient.age
       });
     }
-  
-    try {
-      // Generate therapy plan with timeout (increased to 30 seconds)
-      const generationPromise = generateTherapyPlanWithGemini(age, diagnosis);
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error("Generation timeout exceeded")), 30000) // Changed from 10000 to 30000
-      );
-  
-      const { goals, activities } = await Promise.race([generationPromise, timeoutPromise]);
-  
-      if (!goals || !activities || goals.length === 0 || activities.length === 0) {
-        return res.status(503).json({
-          message: "Failed to generate therapy plan content",
-          details: "The AI service returned empty goals or activities",
-          debug: {
-            age,
-            diagnosis,
-            apiKeyExists: !!process.env.GEMINI_API_KEY,
-            suggestion: "Check the AI service status or try again later"
-          }
-        });
-      }
-  
-      // Fetch YouTube links with error handling
-      let youtubeLinks = [];
-      try {
-        youtubeLinks = await fetchYouTubeLinks(activities);
-      } catch (youtubeError) {
-        console.error("YouTube links fetch failed, continuing without:", youtubeError);
-        youtubeLinks = activities.map(() => "Video not available");
-      }
-  
-      // Successful response
-      res.status(200).json({
-        success: true,
-        data: {
-          goals,
-          activities,
-          youtubeLinks
-        },
-        meta: {
-          generatedAt: new Date().toISOString(),
-          ageGroup: age < 5 ? "preschool" : age < 12 ? "school-age" : "adolescent"
-        }
-      });
-  
-    } catch (error) {
-      console.error("Error in therapy plan generation:", {
-        error: error.message,
-        stack: error.stack,
-        requestBody: req.body
-      });
-  
-      const statusCode = error.message.includes("timeout") ? 504 : 500;
-      
-      res.status(statusCode).json({
-        message: "Therapy plan generation failed",
-        details: process.env.NODE_ENV === 'development' ? error.message : "Service unavailable",
-        errorType: error.name,
-        ...(process.env.NODE_ENV === 'development' && { stack: error.stack })
-      });
-    }
-  };
-  
-  module.exports = { generateTherapyPlanHandler };
+
+    // 3. Transform activities
+    const activities = planData.activities.map(activity => ({
+      name: activity.name,
+      videos: activity.videos
+    }));
+    console.log("Transformed activities:", activities);
+
+    const youtubeLinks = activities.flatMap(a => a.videos.map(v => v.url));
+    console.log("Generated youtubeLinks:", youtubeLinks);
+
+    // 4. Create and save the therapy plan
+    const newPlan = new TherapyPlan({
+      patientId,
+      patientName: patient.patientName,
+      diagnosis: patient.diagnosis,
+      age: patient.age,
+      goals: planData.goals,
+      activities,
+      youtubeLinks,
+      aiGenerated: false
+    });
+    console.log("New plan before save:", newPlan);
+
+    const savedPlan = await newPlan.save();
+    console.log("Saved plan:", savedPlan);
+
+    await NewPatient.findByIdAndUpdate(patientId, { 
+      therapyPlan: savedPlan._id 
+    });
+
+    res.status(201).json({
+      status: "success",
+      data: savedPlan
+    });
+
+  } catch (error) {
+    console.error("Error in createTherapyPlan:", error.stack);
+    res.status(500).json({
+      status: "error",
+      message: "Internal server error",
+      error: error.message
+    });
+  }
+}
+
+module.exports = { createTherapyPlan };

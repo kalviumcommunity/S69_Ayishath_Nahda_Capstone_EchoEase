@@ -1,54 +1,51 @@
 const jwt = require("jsonwebtoken");
 
 module.exports = (req, res, next) => {
- 
-  console.log("Headers Received:", req.headers); // Debugging log
+  // Debugging logs
+  console.log("Headers Received:", req.headers);
+  console.log("Authorization Header:", req.headers.authorization);
 
-  const token = req.header("Authorization");
-  if (!token || !token.startsWith("Bearer ")) {
-    return res.status(401).json({ error: "Access denied. No token provided." });
-  }
-
-  const tokenValue = token.split(" ")[1];
-  if (!tokenValue) {
-    return res.status(401).json({ error: "Invalid token format." });
-  }
-
-  try {
-    const decoded = jwt.verify(tokenValue, process.env.JWT_SECRET);
-    req.user = decoded; // Attach decoded user info to request
-    next();
-  } catch (error) {
-    console.error("Token verification error:", error); // Debugging log
-    res.status(400).json({ error: "Invalid token." });
-=======
+  // Check if Authorization header exists
   const authHeader = req.header("Authorization");
-
-  console.log("Authorization Header:", authHeader); // Debug log
-
   if (!authHeader) {
     return res.status(401).json({ error: "Access denied. No token provided." });
   }
 
+  // Verify Bearer token format
   if (!authHeader.startsWith("Bearer ")) {
-    return res.status(401).json({ error: "Access denied. Invalid token format. Use 'Bearer <token>'." });
+    return res.status(401).json({ 
+      error: "Access denied. Invalid token format. Use 'Bearer <token>'." 
+    });
   }
 
+  // Extract token
   const token = authHeader.split(" ")[1];
-  console.log("Extracted Token:", token); // Debug log
+  console.log("Extracted Token:", token);
 
   if (!token) {
     return res.status(401).json({ error: "Access denied. Token is empty." });
   }
 
   try {
+    // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    console.log("Decoded Token:", decoded); // Debug log
+    console.log("Decoded Token:", decoded);
+    
+    // Attach user to request
     req.user = decoded;
     next();
   } catch (error) {
     console.error("Token verification failed:", error.message);
-    res.status(400).json({ error: "Invalid token.", details: error.message });
-
+    
+    // Differentiate between token expiration and other errors
+    const statusCode = error.name === 'TokenExpiredError' ? 401 : 400;
+    const errorMessage = error.name === 'TokenExpiredError' 
+      ? "Token expired. Please log in again." 
+      : "Invalid token.";
+    
+    res.status(statusCode).json({ 
+      error: errorMessage,
+      ...(process.env.NODE_ENV === 'development' && { details: error.message })
+    });
   }
 };

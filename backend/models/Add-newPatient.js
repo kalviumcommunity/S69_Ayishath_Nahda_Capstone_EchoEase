@@ -1,25 +1,27 @@
-const mongoose=require("mongoose");
+const mongoose = require("mongoose");
 
-const NewPatientSchema=new mongoose.Schema({
-    patientName:{
+const NewPatientSchema = new mongoose.Schema({
+    patientName: {
         type: String,
-
-        required:true
+        required: true
     },
-    age:{
+    age: {
         type: Number,
-        required:true
+        required: true
     },
-    nativeLanguage:{
-        type:String,
-        required:true
+    nativeLanguage: {
+        type: String,
+        required: true
     },
-    therapyPlan:{
-        type:mongoose.Schema.Types.ObjectId,
-         ref:"TherapyPlan" , //link therapyPlan
-         default: null
-
+    diagnosis: {  // Add this field
+        type: String,
+        required: true  // Make it required since your logic depends on it
+    },
+    therapyPlan: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "TherapyPlan", // Link to TherapyPlan
+        default: null
     }
-});
+}, { timestamps: true }); // Optional: adds createdAt and updatedAt fields
 
-module.exports=mongoose.model("NewPatient",NewPatientSchema);
+module.exports = mongoose.model("NewPatient", NewPatientSchema);
