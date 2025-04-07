@@ -13,15 +13,21 @@ const NewPatientSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    diagnosis: {  // Add this field
+    diagnosis: {
         type: String,
-        required: true  // Make it required since your logic depends on it
+        required: true
     },
     therapyPlan: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "TherapyPlan", // Link to TherapyPlan
+        ref: "TherapyPlan",
         default: null
     }
-}, { timestamps: true }); // Optional: adds createdAt and updatedAt fields
+}, { timestamps: true });
+
+// Add a compound index for patientName and nativeLanguage (case-insensitive)
+NewPatientSchema.index(
+    { patientName: 1, nativeLanguage: 1 },
+    { unique: true, collation: { locale: 'en', strength: 2 } }
+);
 
 module.exports = mongoose.model("NewPatient", NewPatientSchema);

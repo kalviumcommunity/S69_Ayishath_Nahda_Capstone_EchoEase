@@ -1,7 +1,15 @@
 const express = require("express");
 const router = express.Router();
 const authMiddleware = require("../middleware/authMiddleware");
-const { createTherapyPlan } = require("../controllers/therapyPlanControllers"); // Import controller
+const { 
+  generateTherapyPlan,
+  createTherapyPlan 
+} = require("../controllers/therapyPlanControllers"); // Destructured import
+const TherapyPlan = require("../models/TherapyPlan");
+
+
+
+router.post('/generate', authMiddleware,generateTherapyPlan);
 
 router.post("/", authMiddleware, createTherapyPlan);
 

@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { FaTrash, FaHome, FaSearch } from "react-icons/fa";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const PatientList = () => {
   const navigate = useNavigate();
@@ -10,28 +13,55 @@ const PatientList = () => {
   const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
-    const fetchPatients = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          navigate("/login");
-          return;
-        }
+    fetchPatients();
+  }, []);
 
-        const response = await axios.get("http://localhost:5000/api/patients", {
+  const fetchPatients = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        navigate("/login");
+        return;
+      }
+
+      const response = await axios.get("http://localhost:5000/api/patients", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setPatients(response.data.data);
+    } catch (err) {
+      setError(err.response?.data?.error || "Failed to fetch patients");
+      toast.error("Failed to fetch patients");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (patientId, e) => {
+    e.stopPropagation();
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        navigate("/login");
+        return;
+      }
+
+      if (window.confirm("Are you sure you want to delete this patient?")) {
+        await axios.delete(`http://localhost:5000/api/patients/${patientId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-
-        setPatients(response.data.data);
-      } catch (err) {
-        setError(err.response?.data?.error || "Failed to fetch patients");
-      } finally {
-        setLoading(false);
+        
+        toast.success("Patient deleted successfully");
+        fetchPatients();
       }
-    };
+    } catch (err) {
+      toast.error(err.response?.data?.error || "Failed to delete patient");
+    }
+  };
 
-    fetchPatients();
-  }, [navigate]);
+  const filteredPatients = patients.filter(patient =>
+    patient?.patientName?.toLowerCase()?.includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div 
@@ -42,31 +72,58 @@ const PatientList = () => {
       <div className="relative z-10 max-w-4xl w-full bg-[#B2D1CF] bg-opacity-80 p-6 rounded-lg shadow-lg">
         <header className="flex justify-between items-center mb-4">
           <img src="/logo.png" alt="Logo" className="h-12" />
-          <button onClick={() => navigate("/dashboard")}>
-            <img src="/home.png" alt="Home" className="h-10 w-10" />
+          <button 
+            onClick={() => navigate("/dashboard")}
+            className="text-[#365B6D] hover:text-[#2a4758] transition-colors"
+          >
+            <FaHome size={24} />
           </button>
         </header>
+        
         <h1 className="text-2xl font-semibold text-[#365B6D] text-center mb-4">Patient List</h1>
-        <input
-          type="text"
-          placeholder="Search patients..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full p-2 mb-4 border border-gray-300 rounded-md focus:ring-[#B2D1CF] focus:outline-none"
-        />
+        
+        <div className="relative mb-4">
+          <FaSearch className="absolute left-3 top-3 text-gray-500" />
+          <input
+            type="text"
+            placeholder="Search patients..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 p-2 border border-gray-300 rounded-md focus:ring-[#365B6D] focus:border-[#365B6D] focus:outline-none"
+          />
+        </div>
+
         {loading ? (
-          <p className="text-center text-gray-700">Loading...</p>
+          <div className="text-center text-gray-700">Loading...</div>
         ) : error ? (
-          <p className="text-center text-red-500">{error}</p>
+          <div className="text-center text-red-500">{error}</div>
         ) : (
-          <ul className="divide-y divide-gray-300">
-            {patients.filter(patient => patient?.patientName?.toLowerCase()?.includes(searchTerm.toLowerCase())).map((patient) => (
-              <li key={patient._id} className="py-2 flex justify-between items-center cursor-pointer hover:bg-gray-100 px-2 rounded" onClick={() => navigate(`/therapy-plans/patient/${patient._id}`)}>
-                <span className="text-lg text-[#365B6D] font-medium">{patient.patientName}</span>
-                <span className="text-gray-700">{patient.age} years</span>
-              </li>
+          <div className="space-y-3">
+            {filteredPatients.map((patient, index) => (
+              <div
+                key={patient._id}
+                className="flex items-center justify-between p-3 bg-white bg-opacity-90 rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                onClick={() => navigate(`/therapy-plans/patient/${patient._id}`)}
+              >
+                <div className="flex items-center">
+                  <span className="text-[#365B6D] font-medium mr-4 w-6 text-right">
+                    {index + 1}.
+                  </span>
+                  <div>
+                    <h3 className="text-lg text-[#365B6D] font-medium">{patient.patientName}</h3>
+                    <p className="text-sm text-gray-600">{patient.age} years</p>
+                  </div>
+                </div>
+                <button
+                  onClick={(e) => handleDelete(patient._id, e)}
+                  className="text-red-500 hover:text-red-700 p-2 rounded-full hover:bg-red-100 transition-colors"
+                  aria-label="Delete patient"
+                >
+                  <FaTrash />
+                </button>
+              </div>
             ))}
-          </ul>
+          </div>
         )}
       </div>
     </div>

@@ -15,6 +15,7 @@ export const Navbar = () => {
           <img
             src="/user.png"
             className="object-contain h-[50px] w-[50px] max-sm:w-10 max-sm:h-10 rounded-full"
+            
             alt="Profile"
           />
         </div>

@@ -43,10 +43,13 @@ const Dashboard = () => {
             className="h-20 mr-3 object-contain"
           />
         </div>
-        <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center overflow-hidden">
+        <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center overflow-hidden"
+         onClick={() => navigate("/profile")}
+        >
           <img
             src="/user.png"
             alt="User Profile"
+            
             className="w-full h-full object-cover"
           />
         </div>

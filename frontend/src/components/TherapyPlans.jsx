@@ -1,283 +1,108 @@
-import { useNavigate, useLocation, useParams } from 'react-router-dom';
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 
-const TherapyPlan = () => {
-  const navigate = useNavigate();
+const TherapyPlans = () => {
   const { patientId } = useParams();
-  const location = useLocation();
-  const [therapyPlan, setTherapyPlan] = useState(null);
-  const [editablePlan, setEditablePlan] = useState(null);
-  const [generating, setGenerating] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const [plan, setPlan] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Handle field changes
-  const handleChange = (field, index, value) => {
-    setEditablePlan(prev => {
-      const newArray = [...prev[field]];
-      newArray[index] = value;
-      return { ...prev, [field]: newArray };
-    });
-  };
-
-  // Generate new plan with AI
-  const handleGenerate = async () => {
-    setGenerating(true);
-    try {
-      const token = localStorage.getItem("token");
-      const response = await axios.post(
-        "http://localhost:5000/api/therapy-plans/generate",
-        {
-          age: therapyPlan.age,
-          diagnosis: therapyPlan.diagnosis
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      
-      setEditablePlan(response.data);
-    } catch (error) {
-      console.error("Error generating therapy plan:", error);
-      setError(error.response?.data?.message || "Failed to generate therapy plan");
-    } finally {
-      setGenerating(false);
-    }
-  };
-
-  // Save the plan
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      const token = localStorage.getItem("token");
-      await axios.put(
-        `http://localhost:5000/api/therapy-plans/${therapyPlan._id}`,
-        editablePlan,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      
-      // Refresh the plan after saving
-      const updatedResponse = await axios.get(
-        `http://localhost:5000/api/therapy-plans/patient/${patientId}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      
-      setTherapyPlan(updatedResponse.data);
-      setEditablePlan(updatedResponse.data);
-    } catch (error) {
-      console.error("Error saving therapy plan:", error);
-      setError(error.response?.data?.message || "Failed to save therapy plan");
-    } finally {
-      setSaving(false);
-    }
-  };
-
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchTherapyPlan = async () => {
       try {
-        // Check for pre-loaded data from navigation state
-        if (location.state?.generatedPlan) {
-          setTherapyPlan(location.state.generatedPlan);
-          setEditablePlan(location.state.generatedPlan);
-          setLoading(false);
-          return;
-        }
-
-        // If no pre-loaded data, fetch from API
-        const token = localStorage.getItem("token");
-        const response = await axios.get(
-          `http://localhost:5000/api/therapy-plans/patient/${patientId}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        
-        setTherapyPlan(response.data);
-        setEditablePlan(response.data);
-      } catch (error) {
-        console.error("Error fetching therapy plan:", error);
-        setError(error.response?.data?.message || "Failed to load therapy plan");
+        console.log(`Fetching plan for patientId: ${patientId}`); // Debug log
+        const response = await fetch(`http://localhost:5000/api/therapy-plans/patient/${patientId}`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        console.log('Response status:', response.status); // Debug status
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        const data = await response.json();
+        console.log('Response data:', data); // Debug data
+        setPlan(data.data);
+      } catch (err) {
+        console.error('Fetch error:', err);
+        setError(err.message);
       } finally {
         setLoading(false);
       }
     };
+    fetchTherapyPlan();
+  }, [patientId]);
 
-    fetchData();
-  }, [patientId, location.state]);
-
-  if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-[#f5f5f5]">
-      <div className="text-2xl font-semibold text-[#365B6D]">Loading therapy plan...</div>
-    </div>
-  );
-
-  if (error) return (
-    <div className="min-h-screen flex items-center justify-center bg-[#f5f5f5]">
-      <div className="text-xl text-red-500 p-4 bg-white rounded-lg shadow-md">
-        Error: {error}
-      </div>
-    </div>
-  );
-
-  if (!therapyPlan) return (
-    <div className="min-h-screen flex items-center justify-center bg-[#f5f5f5]">
-      <div className="text-xl text-[#365B6D] p-4 bg-white rounded-lg shadow-md">
-        No therapy plan found for this patient
-      </div>
-    </div>
-  );
-
+  if (loading) return <div className="text-center p-4">Loading...</div>;
+  if (error) return <div className="text-red-500 text-center p-4">Error: {error}</div>;
+  if (!plan) return <div className="text-center p-4">No therapy plan found</div>;
   return (
-    <div className="min-h-screen bg-[#f5f5f5]">
-      {/* Header */}
-      <div className="bg-[#365B6D] text-white p-4 shadow-md">
-        <div className="container mx-auto flex justify-between items-center">
-          <h1 className="text-2xl font-bold">Therapy Plan for {therapyPlan.patientName}</h1>
-          <div className="flex space-x-4">
-            <button 
-              onClick={() => navigate(`/patient-list`)}
-              className="bg-white text-[#365B6D] px-4 py-2 rounded-md hover:bg-gray-100"
-            >
-              Patient List
-            </button>
-            <button 
-              onClick={() => navigate(-1)}
-              className="bg-white text-[#365B6D] px-4 py-2 rounded-md hover:bg-gray-100"
-            >
-              Back
-            </button>
-          </div>
+    <div className="min-h-screen bg-teal-700 text-white p-4">
+      <div className="flex justify-between items-center mb-4">
+        <button onClick={() => window.history.back()} className="text-white">
+          <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M20 11H7.414l4.293-4.293a1 1 0 1 0-1.414-1.414l-6 6a1 1 0 0 0 0 1.414l6 6a1 1 0 0 0 1.414-1.414L7.414 13H20a1 1 0 0 0 0-2z"/>
+          </svg>
+        </button>
+        <h1 className="text-2xl font-semibold">Patient's Therapy Plans</h1>
+        <img src="/logo.png" alt="EchoEase" className="w-[150px]" />
+      </div>
+
+      <div className="flex justify-center gap-4 mb-4">
+        <div className="w-1/2 bg-gray-200 p-4 rounded-lg text-black">
+          <h3 className="text-lg font-semibold mb-2">Goals</h3>
+          <ul className="list-disc pl-5">
+            {plan.goals.map((goal, index) => (
+              <li key={index} className="mb-2">{goal}</li>
+            ))}
+          </ul>
+        </div>
+        <div className="w-1/2 bg-gray-200 p-4 rounded-lg text-black">
+          <h3 className="text-lg font-semibold mb-2">Activities</h3>
+          {plan.activities.map((activity, index) => (
+            <div key={index} className="mb-4 ">
+              <h4 className="font-medium">{activity.name}</h4>
+              <div className="mt-2 grid grid-cols-1 gap-4">
+                {activity.videos.map((video, vidIndex) => (
+                  <div key={vidIndex} className="flex items-center space-x-4">
+                    <a
+                      href={video.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-500 hover:underline"
+                    >
+                      {video.title}
+                    </a>
+                    {video.thumbnail && (
+                      <img
+                        src={video.thumbnail}
+                        alt={video.title}
+                        className="w-48 h-27 object-cover"
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="container mx-auto p-6">
-        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-          {/* Generation Button */}
-          <div className="bg-[#B2D1CF] p-4 flex justify-between items-center">
-            <h2 className="text-xl font-bold text-[#365B6D]">THERAPY PLAN</h2>
-            <button
-              onClick={handleGenerate}
-              disabled={generating}
-              className={`py-2 px-6 rounded-lg text-white font-bold ${generating ? 'bg-gray-400' : 'bg-[#4CAF50] hover:bg-[#3e8e41]'} flex items-center`}
-            >
-              {generating ? (
-                <>
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Generating...
-                </>
-              ) : "Generate with AI"}
-            </button>
-          </div>
-
-          {/* Patient Info */}
-          <div className="p-6 border-b">
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div>
-                <h3 className="text-sm font-semibold text-gray-500">PATIENT NAME</h3>
-                <p className="text-lg">{therapyPlan.patientName}</p>
-              </div>
-              <div>
-                <h3 className="text-sm font-semibold text-gray-500">AGE</h3>
-                <p className="text-lg">{therapyPlan.age} years</p>
-              </div>
-              <div>
-                <h3 className="text-sm font-semibold text-gray-500">DIAGNOSIS</h3>
-                <p className="text-lg">{therapyPlan.diagnosis}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Goals Section */}
-          <div className="p-6 border-b">
-            <h3 className="text-lg font-bold text-[#365B6D] mb-4">GOALS</h3>
-            <div className="space-y-4">
-              {editablePlan?.goals?.map((goal, index) => (
-                <div key={`goal-${index}`} className="flex items-start">
-                  <span className="bg-[#365B6D] text-white rounded-full w-6 h-6 flex items-center justify-center mt-1 mr-3">
-                    {index + 1}
-                  </span>
-                  <textarea
-                    value={goal}
-                    onChange={(e) => handleChange("goals", index, e.target.value)}
-                    className="flex-1 border border-gray-300 rounded-md p-2 min-h-[80px] focus:outline-none focus:ring-2 focus:ring-[#B2D1CF]"
-                    placeholder="Enter therapy goal..."
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Activities Section */}
-          <div className="p-6 border-b">
-            <h3 className="text-lg font-bold text-[#365B6D] mb-4">ACTIVITIES</h3>
-            <div className="space-y-4">
-              {editablePlan?.activities?.map((activity, index) => (
-                <div key={`activity-${index}`} className="flex items-start">
-                  <span className="bg-[#365B6D] text-white rounded-full w-6 h-6 flex items-center justify-center mt-1 mr-3">
-                    {index + 1}
-                  </span>
-                  <div className="flex-1">
-                    <textarea
-                      value={activity}
-                      onChange={(e) => handleChange("activities", index, e.target.value)}
-                      className="w-full border border-gray-300 rounded-md p-2 min-h-[80px] focus:outline-none focus:ring-2 focus:ring-[#B2D1CF] mb-2"
-                      placeholder="Enter therapy activity..."
-                    />
-                    <div className="flex items-center">
-                      <input
-                        type="text"
-                        value={editablePlan.youtubeLinks?.[index] || ""}
-                        onChange={(e) => handleChange("youtubeLinks", index, e.target.value)}
-                        className="flex-1 border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-[#B2D1CF]"
-                        placeholder="YouTube link for this activity"
-                      />
-                      {editablePlan.youtubeLinks?.[index] && (
-                        <a 
-                          href={editablePlan.youtubeLinks[index]} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="ml-2 bg-blue-500 text-white px-3 py-2 rounded-md hover:bg-blue-600"
-                        >
-                          View
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Save Button */}
-          <div className="p-6 bg-gray-50 flex justify-between">
-            <button
-              onClick={() => navigate(`/patient-list`)}
-              className="text-[#365B6D] hover:underline"
-            >
-              ← Back to Patient List
-            </button>
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className={`bg-[#365B6D] text-white py-2 px-6 rounded-lg hover:bg-[#2b4a59] transition-colors flex items-center ${saving ? 'opacity-75' : ''}`}
-            >
-              {saving ? (
-                <>
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Saving...
-                </>
-              ) : "Save Plan"}
-            </button>
-          </div>
-        </div>
+      <div className="flex justify-center gap-4 mt-4">
+        <button className="bg-white text-teal-700 px-4 py-2 rounded flex items-center">
+          <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
+          </svg>
+          Bookmark
+        </button>
+        <button className="bg-white text-teal-700 px-4 py-2 rounded flex items-center">
+          <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+          </svg>
+          Edit
+        </button>
       </div>
     </div>
   );
 };
 
-export default TherapyPlan;
+export default TherapyPlans;

@@ -3,6 +3,7 @@ require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const path=require("path");
 
 // Routes
 const therapistRoutes = require("./routes/therapistRoutes");
@@ -36,6 +37,8 @@ mongoose
     console.error("MongoDB connection error:", err);
   });
 
+
+  app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 // Define Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/therapist", therapistRoutes);
