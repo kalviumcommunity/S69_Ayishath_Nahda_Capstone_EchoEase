@@ -194,7 +194,7 @@ const Profile = () => {
             )}
           </div>
 
-          {/* Profile fields */}
+          {/* Profile fieldslists */}
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium mb-1">Name</label>
