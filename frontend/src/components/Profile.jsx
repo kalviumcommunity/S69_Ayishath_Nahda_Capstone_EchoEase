@@ -179,12 +179,47 @@ const Profile = () => {
             )}
           </div>
 
+
           {/* Profile Fields */}
           {["name", "designation", "hospital"].map((field) => (
             <div key={field} className="mb-4">
               <label className="block text-sm font-medium mb-1 capitalize">
                 {field}
               </label>
+
+          {/* Profile fieldslists */}
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Name</label>
+              {editing ? (
+                <input
+                  type="text"
+                  value={therapist.name}
+                  onChange={(e) => setTherapist({...therapist, name: e.target.value})}
+                  className="w-full p-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#365B6D]"
+                />
+              ) : (
+                <p className="p-2 rounded bg-[#B2D1CF]/70 inline-block">{therapist.name}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">Designation</label>
+              {editing ? (
+                <input
+                  type="text"
+                  value={therapist.designation}
+                  onChange={(e) => setTherapist({...therapist, designation: e.target.value})}
+                  className="w-full p-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#365B6D]"
+                />
+              ) : (
+                <p className="p-2 rounded bg-[#B2D1CF]/70 inline-block">{therapist.designation}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">Hospital</label>
+
               {editing ? (
                 <input
                   type="text"
