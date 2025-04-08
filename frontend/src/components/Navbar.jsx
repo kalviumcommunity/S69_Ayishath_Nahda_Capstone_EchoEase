@@ -1,6 +1,45 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { useLocation, Link } from "react-router-dom";
+import axios from "axios";
 
 export const Navbar = () => {
+  const [profilePic, setProfilePic] = useState("/user.png");
+  const location = useLocation();
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await axios.get("http://localhost:5000/api/therapist/profile", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (res.data.profilePic) {
+          const imgUrl = res.data.profilePic.startsWith("http")
+            ? res.data.profilePic
+            : `http://localhost:5000${res.data.profilePic}`;
+          setProfilePic(imgUrl);
+        } else {
+          setProfilePic("/user.png");
+        }
+      } catch (err) {
+        console.error("Error fetching profile image:", err);
+        setProfilePic("/user.png"); // Fallback to default image on error
+      }
+    };
+
+    fetchProfile(); // Fetch on mount
+
+    // Add event listener for profile updates
+    const listener = () => fetchProfile();
+    window.addEventListener("profileUpdate", listener);
+
+    // Refetch when location changes (e.g., navigation)
+    fetchProfile();
+
+    return () => window.removeEventListener("profileUpdate", listener);
+  }, [location]); // Add location to dependency array
+
   return (
     <nav className="absolute top-0 left-0 right-0 z-50 bg-[#D9D9D9] shadow-sm">
       <div className="flex justify-between items-center px-5 py-0 w-full h-[73px]">
@@ -11,13 +50,28 @@ export const Navbar = () => {
             alt="EchoEase Logo"
           />
         </div>
+        <div className="flex-grow"></div>
         <div className="relative z-50">
-          <img
-            src="/user.png"
-            className="object-contain h-[50px] w-[50px] max-sm:w-10 max-sm:h-10 rounded-full"
-            
-            alt="Profile"
-          />
+          {location.pathname === "/profile" ? (
+            <Link to="/dashboard">
+              <img
+                src="/home.png"
+                alt="Home"
+                className="h-[35px] w-[35px] object-contain hover:opacity-80 cursor-pointer"
+              />
+            </Link>
+          ) : (
+            <Link to="/profile">
+              <img
+                src={profilePic}
+                className="object-cover h-[50px] w-[50px] max-sm:w-10 max-sm:h-10 rounded-full"
+                alt="Profile"
+                onError={(e) => {
+                  e.target.src = "/user.png"; // Fallback if image fails to load
+                }}
+              />
+            </Link>
+          )}
         </div>
       </div>
     </nav>

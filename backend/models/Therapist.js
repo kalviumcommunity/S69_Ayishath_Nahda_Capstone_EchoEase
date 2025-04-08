@@ -23,6 +23,11 @@ const TherapistSchema = new mongoose.Schema({       //therapist/audiologist sche
     type: String,
     required: true
   },
+  profilePic: { 
+    type: String, 
+    default: ""
+   },
+   
   resetOtp:{
     type:String,
     default: null
