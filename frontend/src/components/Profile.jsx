@@ -35,17 +35,12 @@ const Profile = () => {
           const imageUrl = profilePic.startsWith("http")
             ? profilePic
             : `http://localhost:5000${profilePic}`;
-        if (profilePic) {
-          const imageUrl = profilePic.startsWith("http")
-            ? profilePic
-            : `http://localhost:5000${profilePic}`;
           setPreviewUrl(imageUrl);
         } else {
           setPreviewUrl("");
         }
       } catch (error) {
         console.error("Failed to fetch profile:", error);
-        setMessage("Error fetching profile");
         setMessage("Error fetching profile");
       } finally {
         setLoading(false);
@@ -54,7 +49,7 @@ const Profile = () => {
 
     fetchTherapistProfile();
   }, [navigate]);
-//editing or updating funcionality
+
   const handleEditToggle = () => {
     setEditing(!editing);
     setMessage("");
@@ -62,21 +57,6 @@ const Profile = () => {
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    if (!file) return;
-
-    if (!file.type.match("image.*")) {
-      setMessage("Please select a valid image file (JPEG/PNG).");
-      return;
-    }
-
-    if (file.size > 2 * 1024 * 1024) {
-      setMessage("File size must be under 2MB.");
-      return;
-    }
-
-    setNewProfilePic(file);
-    setPreviewUrl(URL.createObjectURL(file));
-    setMessage("");
     if (!file) return;
 
     if (!file.type.match("image.*")) {
@@ -104,11 +84,8 @@ const Profile = () => {
       formData.append("designation", therapist.designation);
       formData.append("hospital", therapist.hospital);
       if (newProfilePic) formData.append("profilePic", newProfilePic);
-      if (newProfilePic) formData.append("profilePic", newProfilePic);
 
       const res = await axios.put(
-        "http://localhost:5000/api/therapist/profile",
-        formData,
         "http://localhost:5000/api/therapist/profile",
         formData,
         {
@@ -120,7 +97,7 @@ const Profile = () => {
       );
 
       const updated = res.data.therapist;
-      setTherapist((prev) => ({ ...prev, ...updated }));
+      setTherapist((prev) => ({ ...prev, ...updated, profilePic: updated.profilePic || prev.profilePic }));
 
       if (updated.profilePic) {
         const imageUrl = updated.profilePic.startsWith("http")
@@ -133,14 +110,10 @@ const Profile = () => {
 
       setEditing(false);
       window.dispatchEvent(new Event("profileUpdate"));
-      window.dispatchEvent(new Event("profileUpdate"));
       setMessage("Profile updated successfully!");
       setTimeout(() => setMessage(""), 3000);
     } catch (error) {
       console.error("Update failed:", error);
-      setMessage(
-        `Failed to update profile: ${error.response?.data?.message || error.message}`
-      );
       setMessage(
         `Failed to update profile: ${error.response?.data?.message || error.message}`
       );
@@ -157,10 +130,8 @@ const Profile = () => {
         <img
           src="/image 22.png"
           alt="Background"
-          alt="Background"
           className="w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-[#365B6D] opacity-60" />
         <div className="absolute inset-0 bg-[#365B6D] opacity-60" />
       </div>
 
@@ -168,15 +139,11 @@ const Profile = () => {
         <div className="bg-[#B2D1CF]/50 p-6 rounded-2xl shadow-lg w-full max-w-md text-center text-black">
           {message && (
             <div
-             
               className={`mb-4 p-2 rounded ${
-                  message.toLowerCase().toLowerCase().includes("success")
-                 
+                message.toLowerCase().includes("success")
                   ? "bg-green-100 text-green-800"
-                 
                   : "bg-red-100 text-red-800"
-                }`}
-            
+              }`}
             >
               {message}
             </div>
@@ -197,7 +164,6 @@ const Profile = () => {
                 <span className="text-gray-500">No Image</span>
               )}
             </div>
-
 
             {editing && (
               <div className="mt-2">
