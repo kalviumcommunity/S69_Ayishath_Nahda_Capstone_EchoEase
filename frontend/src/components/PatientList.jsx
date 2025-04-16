@@ -36,7 +36,8 @@ const PatientList = () => {
       setLoading(false);
     }
   };
-//delete functionality
+
+  // Delete functionality
   const handleDelete = async (patientId, e) => {
     e.stopPropagation();
     try {
@@ -72,24 +73,12 @@ const PatientList = () => {
       <div className="relative z-10 max-w-4xl w-full bg-[#B2D1CF] bg-opacity-80 p-6 rounded-lg shadow-lg">
         <header className="flex justify-between items-center mb-4 px-4">
           <img src="/logo.png" alt="Logo" className="h-25" />
+          {/* Use a single button for navigation with the home icon */}
           <button 
             onClick={() => navigate("/dashboard")}
-            className="text-[#365B6D] hover:text-[#2a4758] transition-colors"
+            className="text-[#365B6D] hover:text-[#2a4758] transition-colors transition-transform transform hover:scale-105"
           >
-            <header className="flex justify-between items-center mb-4">
- 
-  <button 
-    onClick={() => navigate("/dashboard")}
-    className="transition-transform transform hover:scale-105"
-  >
-    <img 
-      src="/home.png" 
-      alt="Home" 
-      className="h-7 w-7  object-contain" 
-    />
-  </button>
-</header>
-
+            <FaHome className="h-7 w-7 object-contain" /> {/* Replaced img with FaHome icon */}
           </button>
         </header>
         

@@ -1,44 +1,33 @@
-// src/service/TherapyPlanService.js
-import axios from 'axios';
-import { authHeader } from './authHeader';
+import axios from "axios";
 
-const API_URL = 'http://localhost:5000/api/therapyPlans'; // Use full URL in development
+const API_URL = "http://localhost:5000/api/therapyplans";
 
-class TherapyPlanService {
-  // Generate a therapy plan template
-  generateTherapyPlan(diagnosis, age, language = 'en') {
-    return axios.post(
-      `${API_URL}/generate`,
-      { diagnosis, age, language },
-      { headers: authHeader() }
-    );
+export const getTherapyPlan = async (patientId) => {
+  try {
+    const response = await axios.get(`${API_URL}/patient/${patientId}`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+        "Content-Type": "application/json",
+      },
+    });
+    return response.data.data;
+  } catch (error) {
+    console.error("Error fetching therapy plan:", error);
+    throw new Error(error.response?.data?.message || "Failed to fetch therapy plan");
   }
+};
 
-  // Create a new therapy plan for a patient
-  createTherapyPlan(patientId) {
-    return axios.post(
-      API_URL,
-      { patientId },
-      { headers: authHeader() }
-    );
+export const createTherapyPlan = async (patientData) => {
+  try {
+    const response = await axios.post(`${API_URL}/generate`, patientData, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+        "Content-Type": "application/json",
+      },
+    });
+    return response.data.data;
+  } catch (error) {
+    console.error("Error generating therapy plan:", error);
+    throw new Error(error.response?.data?.message || "Failed to generate therapy plan");
   }
-
-  // Get therapy plan by patient ID
-  getTherapyPlanByPatientId(patientId) {
-    return axios.get(
-      `${API_URL}/patient/${patientId}`,
-      { headers: authHeader() }
-    );
-  }
-
-  // Update an existing therapy plan
-  updateTherapyPlan(planId, updateData) {
-    return axios.put(
-      `${API_URL}/${planId}`,
-      updateData,
-      { headers: authHeader() }
-    );
-  }
-}
-
-export default new TherapyPlanService();
+};
