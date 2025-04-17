@@ -18,14 +18,14 @@ const Dashboard = () => {
           return;
         }
 
-        const therapistRes = await axios.get("http://localhost:5000/api/therapist/profile", {
+        const therapistRes = await axios.get("${import.meta.env.VITE_META_URI}/api/therapist/profile", {
           headers: { Authorization: `Bearer ${token}` },
         });
         setTherapistName(therapistRes.data.name || "");
         if (therapistRes.data.profilePic) {
           const imgUrl = therapistRes.data.profilePic.startsWith("http")
             ? therapistRes.data.profilePic
-            : `http://localhost:5000${therapistRes.data.profilePic}`;
+            : `${import.meta.env.VITE_META_URI}${therapistRes.data.profilePic}`;
           setProfilePic(imgUrl);
         }
       } catch (error) {

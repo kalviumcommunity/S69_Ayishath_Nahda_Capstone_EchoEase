@@ -10,14 +10,14 @@ export const Navbar = () => {
     const fetchProfile = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await axios.get("http://localhost:5000/api/therapist/profile", {
+        const res = await axios.get("${import.meta.env.VITE_META_URI}/api/therapist/profile", {
           headers: { Authorization: `Bearer ${token}` },
         });
 
         if (res.data.profilePic) {
           const imgUrl = res.data.profilePic.startsWith("http")
             ? res.data.profilePic
-            : `http://localhost:5000${res.data.profilePic}`;
+            : `${import.meta.env.VITE_META_URI}${res.data.profilePic}`;
           setProfilePic(imgUrl);
         } else {
           setProfilePic("/user.png");
