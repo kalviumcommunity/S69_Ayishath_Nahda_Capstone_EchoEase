@@ -10,7 +10,7 @@ const ForgotPassword = () => {
     const handleSendOtp = async (e) => {
       e.preventDefault();
       try {
-        const response = await axios.post("http://localhost:5000/api/auth/forgot-password", { email });
+        const response = await axios.post("${import.meta.env.VITE_META_URI}/api/auth/forgot-password", { email });
         setMessage(response.data.message);
         localStorage.setItem("resetEmail", email); // Store email for next step
         navigate("/verify-reset-otp"); // Redirect to OTP verification page

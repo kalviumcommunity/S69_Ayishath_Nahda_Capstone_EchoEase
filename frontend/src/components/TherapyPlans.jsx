@@ -11,7 +11,7 @@ const TherapyPlans = () => {
     const fetchTherapyPlan = async () => {
       try {
         console.log(`Fetching plan for patientId: ${patientId}`); // Debug log
-        const response = await fetch(`http://localhost:5000/api/therapy-plans/patient/${patientId}`, {
+        const response = await fetch(`${import.meta.env.VITE_META_URI}/api/therapy-plans/patient/${patientId}`, {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
             'Content-Type': 'application/json'

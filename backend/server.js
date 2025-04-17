@@ -3,7 +3,7 @@ require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
-const path=require("path");
+const path = require("path");
 
 // Routes
 const therapistRoutes = require("./routes/therapistRoutes");
@@ -11,19 +11,29 @@ const authRoutes = require("./routes/authRoutes");
 const patientRoutes = require("./routes/patientRoutes");
 const therapyPlansRoutes = require("./routes/therapyPlanRoutes");
 
-
 const PORT = process.env.PORT || 3000;
-
 
 const app = express();
 app.use(express.json());
 
-// Enhanced CORS settings
+// ✅ Enhanced CORS: Allow both local and Netlify frontend
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://echoease.netlify.app"
+];
+
 app.use(
   cors({
-    origin: "http://localhost:5173", // Adjust based on your frontend URL
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE"],
-    allowedHeaders: ["Authorization", "Content-Type"],
+    allowedHeaders: ["Authorization", "Content-Type"]
   })
 );
 
@@ -37,8 +47,8 @@ mongoose
     console.error("MongoDB connection error:", err);
   });
 
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-  app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 // Define Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/therapist", therapistRoutes);
