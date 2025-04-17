@@ -7,15 +7,7 @@ dotenv.config();
 // Temporarily store OTPs (Replace with Redis or a database for production)
 const otpStorage = new Map();
 
-// Configure SMTP Transporter
-// const transporter = nodemailer.createTransport({
-//     service: process.env.SMTP_SERVICE || "smtp.gmail.com", // Use Gmail or another provider
-//     port:587,
-//     auth: {
-//         user: process.env.SMTP_EMAIL, // Your email
-//         pass: process.env.SMTP_PASSWORD, // App password or SMTP password
-//     },
-// });
+//3RD PARTY SING GMAIL OTP
 
 const transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",
