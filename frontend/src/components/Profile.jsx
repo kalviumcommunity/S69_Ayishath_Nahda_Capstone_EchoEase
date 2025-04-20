@@ -24,7 +24,7 @@ const Profile = () => {
         const token = localStorage.getItem("token");
         if (!token) return navigate("/login");
 
-        const res = await axios.get("${import.meta.env.VITE_META_URI}/api/therapist/profile", {
+        const res = await axios.get("http://localhost:5000/api/therapist/profile", {
           headers: { Authorization: `Bearer ${token}` },
         });
 

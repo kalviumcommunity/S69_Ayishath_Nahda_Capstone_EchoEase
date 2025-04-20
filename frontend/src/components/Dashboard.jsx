@@ -18,7 +18,7 @@ const Dashboard = () => {
           return;
         }
 
-        const therapistRes = await axios.get("${import.meta.env.VITE_META_URI}/api/therapist/profile", {
+        const therapistRes = await axios.get("http://localhost:5000/api/therapist/profile", {
           headers: { Authorization: `Bearer ${token}` },
         });
         setTherapistName(therapistRes.data.name || "");

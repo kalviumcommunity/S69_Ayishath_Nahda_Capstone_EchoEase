@@ -44,7 +44,7 @@ const AddPatient = () => {
         try {
             const token = localStorage.getItem('token');
             const response = await axios.get(
-                `${import.meta.env.VITE_META_URI}/api/patients?search=${encodeURIComponent(patientName)}`,
+                `http://localhost:5000/api/patients?search=${encodeURIComponent(patientName)}`,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             const duplicate = response.data.data.find(
@@ -107,7 +107,7 @@ const AddPatient = () => {
         try {
             // Create patient
             const patientResponse = await axios.post(
-                '${import.meta.env.VITE_META_URI}/api/patients',
+                'http://localhost:5000/api/patients',
                 patientPayload,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -115,7 +115,7 @@ const AddPatient = () => {
 
             // Create therapy plan
             const planResponse = await axios.post(
-                '${import.meta.env.VITE_META_URI}/api/therapy-plans',
+                'http://localhost:5000/api/therapy-plans',
                 { patientId },
                 { headers: { Authorization: `Bearer ${token}` } }
             );

@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "${import.meta.env.VITE_META_URI}/api/therapyplans";
+const API_URL = "http://localhost:5000/api/therapyplans";
 
 export const getTherapyPlan = async (patientId) => {
   try {
