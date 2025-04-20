@@ -4,26 +4,27 @@ import { useParams } from 'react-router-dom';
 const TherapyPlans = () => {
   const { patientId } = useParams();
   const [plan, setPlan] = useState(null);
+  const [editMode, setEditMode] = useState(false);
+  const [goals, setGoals] = useState([]);
+  const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchTherapyPlan = async () => {
       try {
-        console.log(`Fetching plan for patientId: ${patientId}`); // Debug log
         const response = await fetch(`http://localhost:5000/api/therapy-plans/patient/${patientId}`, {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
             'Content-Type': 'application/json'
           }
         });
-        console.log('Response status:', response.status); // Debug status
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const data = await response.json();
-        console.log('Response data:', data); // Debug data
         setPlan(data.data);
+        setGoals(data.data.goals || []);
+        setActivities(data.data.activities || []);
       } catch (err) {
-        console.error('Fetch error:', err);
         setError(err.message);
       } finally {
         setLoading(false);
@@ -32,74 +33,132 @@ const TherapyPlans = () => {
     fetchTherapyPlan();
   }, [patientId]);
 
+  const handleGoalChange = (index, value) => {
+    const updated = [...goals];
+    updated[index] = value;
+    setGoals(updated);
+  };
+
+  const handleAddGoal = () => setGoals([...goals, ""]);
+
+  const handleActivityChange = (index, field, value) => {
+    const updated = [...activities];
+    updated[index][field] = value;
+    setActivities(updated);
+  };
+
+  const handleAddActivity = () => setActivities([...activities, { name: "", videos: [] }]);
+
+  const handleSave = async () => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/therapy-plans/${plan._id}`, {
+        method: "PUT",
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ goals, activities }),
+      });
+      if (!res.ok) throw new Error("Failed to save changes");
+      const updatedPlan = await res.json();
+      setPlan(updatedPlan.data);
+      setEditMode(false);
+    } catch (err) {
+      alert("Error saving data: " + err.message);
+    }
+  };
+
   if (loading) return <div className="text-center p-4">Loading...</div>;
   if (error) return <div className="text-red-500 text-center p-4">Error: {error}</div>;
-  if (!plan) return <div className="text-center p-4">No therapy plan found</div>;
+
   return (
-    <div className="min-h-screen bg-teal-700 text-white p-4">
-      <div className="flex justify-between items-center mb-4">
-        <button onClick={() => window.history.back()} className="text-white">
-          <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M20 11H7.414l4.293-4.293a1 1 0 1 0-1.414-1.414l-6 6a1 1 0 0 0 0 1.414l6 6a1 1 0 0 0 1.414-1.414L7.414 13H20a1 1 0 0 0 0-2z"/>
-          </svg>
-        </button>
-        <h1 className="text-2xl font-semibold">Patient's Therapy Plans</h1>
-        <img src="/logo.png" alt="EchoEase" className="w-[150px]" />
-      </div>
-
-      <div className="flex justify-center gap-4 mb-4">
-        <div className="w-1/2 bg-gray-200 p-4 rounded-lg text-black">
-          <h3 className="text-lg font-semibold mb-2">Goals</h3>
-          <ul className="list-disc pl-5">
-            {plan.goals.map((goal, index) => (
-              <li key={index} className="mb-2">{goal}</li>
-            ))}
-          </ul>
+    <div className="min-h-screen p-6 sm:p-10 bg-cover bg-center" style={{
+      backgroundImage: `linear-gradient(rgba(54, 91, 109, 0.59), rgba(54, 91, 109, 0.59)), url('https://i.pinimg.com/736x/0c/ca/d1/0ccad1b5d5d43afd2ad36ba4ae7cb977.jpg')`
+    }}>
+      <div className="max-w-4xl mx-auto bg-[#B2D1CF]/80 p-8 sm:p-10 rounded-2xl shadow-xl min-h-[500px] flex flex-col justify-between">
+        <div className="flex justify-between items-center mb-6">
+          <button onClick={() => window.history.back()} className="text-teal-900 text-sm hover:underline">← Back</button>
+          <h1 className="text-2xl font-semibold text-teal-900 text-center">Patient's Therapy Plan</h1>
+          <img src="/logo.png" alt="EchoEase" className="w-[120px]" />
         </div>
-        <div className="w-1/2 bg-gray-200 p-4 rounded-lg text-black">
-          <h3 className="text-lg font-semibold mb-2">Activities</h3>
-          {plan.activities.map((activity, index) => (
-            <div key={index} className="mb-4 ">
-              <h4 className="font-medium">{activity.name}</h4>
-              <div className="mt-2 grid grid-cols-1 gap-4">
-                {activity.videos.map((video, vidIndex) => (
-                  <div key={vidIndex} className="flex items-center space-x-4">
-                    <a
-                      href={video.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-500 hover:underline"
-                    >
-                      {video.title}
-                    </a>
-                    {video.thumbnail && (
-                      <img
-                        src={video.thumbnail}
-                        alt={video.title}
-                        className="w-48 h-27 object-cover"
-                      />
-                    )}
-                  </div>
-                ))}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Goals */}
+          <div>
+            <h2 className="text-xl sm:text-2xl font-bold text-teal-800 mb-3">Goals</h2>
+            {goals.map((goal, index) => (
+              <div key={index} className="mb-2">
+                {editMode ? (
+                  <input
+                    type="text"
+                    value={goal}
+                    onChange={(e) => handleGoalChange(index, e.target.value)}
+                    className="w-full px-3 py-2 rounded border border-gray-300 focus:outline-none focus:ring focus:ring-teal-300"
+                  />
+                ) : (
+                  <p className="text-gray-800">• {goal}</p>
+                )}
               </div>
-            </div>
-          ))}
-        </div>
-      </div>
+            ))}
+            {editMode && (
+              <button onClick={handleAddGoal} className="text-sm text-blue-700 mt-2 hover:underline">+ Add Goal</button>
+            )}
+          </div>
 
-      <div className="flex justify-center gap-4 mt-4">
-        <button className="bg-white text-teal-700 px-4 py-2 rounded flex items-center">
-          <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
-          </svg>
-          Bookmark
-        </button>
-        <button className="bg-white text-teal-700 px-4 py-2 rounded flex items-center">
-          <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
-          </svg>
-          Edit
-        </button>
+          {/* Activities */}
+          <div>
+            <h2 className="text-xl sm:text-2xl font-bold text-teal-800 mb-3">Activities</h2>
+            {activities.map((activity, index) => (
+              <div key={index} className="mb-4">
+                {editMode ? (
+                  <input
+                    type="text"
+                    value={activity.name}
+                    onChange={(e) => handleActivityChange(index, 'name', e.target.value)}
+                    placeholder="Activity Name"
+                    className="w-full px-3 py-2 rounded border border-gray-300 focus:outline-none focus:ring focus:ring-teal-300"
+                  />
+                ) : (
+                  <p className="font-medium text-gray-800">• {activity.name}</p>
+                )}
+              </div>
+            ))}
+            {editMode && (
+              <button onClick={handleAddActivity} className="text-sm text-blue-700 mt-2 hover:underline">+ Add Activity</button>
+            )}
+          </div>
+        </div>
+
+        {/* Buttons */}
+        <div className="flex justify-center gap-4 mt-8">
+          {editMode ? (
+            <>
+              <button
+                onClick={handleSave}
+                className="bg-teal-700 hover:bg-teal-800 text-white px-6 py-2 rounded-full shadow transition"
+              >
+                Save
+              </button>
+              <button
+                onClick={() => {
+                  setEditMode(false);
+                  setGoals(plan.goals);
+                  setActivities(plan.activities);
+                }}
+                className="bg-white border border-teal-700 text-teal-700 hover:bg-teal-50 px-6 py-2 rounded-full shadow transition"
+              >
+                Cancel
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={() => setEditMode(true)}
+              className="bg-white border border-teal-700 text-teal-700 hover:bg-teal-50 px-6 py-2 rounded-full shadow transition"
+            >
+              Edit
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
