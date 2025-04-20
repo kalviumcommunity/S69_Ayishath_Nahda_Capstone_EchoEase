@@ -18,7 +18,7 @@ const Login = () => {
     console.log("Login attempt:", { email: trimmedEmail });
 
     try {
-      const response = await fetch("http://localhost:5000/api/auth/login", {
+      const response = await fetch("${import.meta.env.VITE_META_URI}/api/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
