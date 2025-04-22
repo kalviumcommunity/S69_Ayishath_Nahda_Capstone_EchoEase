@@ -24,21 +24,18 @@ export const Navbar = () => {
         }
       } catch (err) {
         console.error("Error fetching profile image:", err);
-        setProfilePic("/user.png"); // Fallback to default image on error
+        setProfilePic("/user.png");
       }
     };
 
     fetchProfile(); // Fetch on mount
 
-    // Add event listener for profile updates
-    const listener = () => fetchProfile();
-    window.addEventListener("profileUpdate", listener);
+    // Listen for profile updates
+    const handleProfileUpdate = () => fetchProfile();
+    window.addEventListener("profileUpdate", handleProfileUpdate);
 
-    // Refetch when location changes (e.g., navigation)
-    fetchProfile();
-
-    return () => window.removeEventListener("profileUpdate", listener);
-  }, [location]); // Add location to dependency array
+    return () => window.removeEventListener("profileUpdate", handleProfileUpdate);
+  }, [location]);
 
   return (
     <nav className="absolute top-0 left-0 right-0 z-50 bg-[#D9D9D9] shadow-sm">
@@ -67,7 +64,7 @@ export const Navbar = () => {
                 className="object-cover h-[50px] w-[50px] max-sm:w-10 max-sm:h-10 rounded-full"
                 alt="Profile"
                 onError={(e) => {
-                  e.target.src = "/user.png"; // Fallback if image fails to load
+                  e.target.src = "/user.png";
                 }}
               />
             </Link>

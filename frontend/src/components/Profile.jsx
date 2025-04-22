@@ -15,33 +15,38 @@ const Profile = () => {
   const [newProfilePic, setNewProfilePic] = useState(null);
   const [previewUrl, setPreviewUrl] = useState("");
   const [message, setMessage] = useState("");
-
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchTherapistProfile = async () => {
       try {
         const token = localStorage.getItem("token");
-        if (!token) return navigate("/login");
+        if (!token) {
+          navigate("/login");
+          return;
+        }
 
         const res = await axios.get("http://localhost:5000/api/therapist/profile", {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        const { name, designation, hospital, profilePic } = res.data;
-        setTherapist({ name: name || "", designation: designation || "", hospital: hospital || "", profilePic: profilePic || "" });
+        const profileData = {
+          name: res.data.name || "",
+          designation: res.data.designation || "",
+          hospital: res.data.hospital || "",
+          profilePic: res.data.profilePic || "",
+        };
 
-        if (profilePic) {
-          const imageUrl = profilePic.startsWith("http")
-            ? profilePic
-            : `${import.meta.env.VITE_META_URI}${profilePic}`;
+        setTherapist(profileData);
+        if (res.data.profilePic) {
+          // Ensure the URL is absolute if it's not already
+          const imageUrl = res.data.profilePic.startsWith('http') 
+            ? res.data.profilePic 
+            : `http://localhost:5000${res.data.profilePic}`;
           setPreviewUrl(imageUrl);
-        } else {
-          setPreviewUrl("");
         }
       } catch (error) {
         console.error("Failed to fetch profile:", error);
-        setMessage("Error fetching profile");
       } finally {
         setLoading(false);
       }
@@ -57,21 +62,20 @@ const Profile = () => {
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    if (!file) return;
-
-    if (!file.type.match("image.*")) {
-      setMessage("Please select a valid image file (JPEG/PNG).");
-      return;
+    if (file) {
+      if (!file.type.match('image.*')) {
+        setMessage("Please select an image file (JPEG, PNG)");
+        return;
+      }
+      if (file.size > 2 * 1024 * 1024) {
+        setMessage("File size must be less than 2MB");
+        return;
+      }
+      
+      setNewProfilePic(file);
+      setPreviewUrl(URL.createObjectURL(file));
+      setMessage("");
     }
-
-    if (file.size > 2 * 1024 * 1024) {
-      setMessage("File size must be under 2MB.");
-      return;
-    }
-
-    setNewProfilePic(file);
-    setPreviewUrl(URL.createObjectURL(file));
-    setMessage("");
   };
 
   const handleSave = async () => {
@@ -83,11 +87,14 @@ const Profile = () => {
       formData.append("name", therapist.name);
       formData.append("designation", therapist.designation);
       formData.append("hospital", therapist.hospital);
-      if (newProfilePic) formData.append("profilePic", newProfilePic);
+      
+      if (newProfilePic) {
+        formData.append("profilePic", newProfilePic);
+      }
 
       const res = await axios.put(
-        "http://localhost:5000/api/therapist/profile",
-        formData,
+        "http://localhost:5000/api/therapist/profile", 
+        formData, 
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -96,27 +103,30 @@ const Profile = () => {
         }
       );
 
-      const updated = res.data.therapist;
-      setTherapist((prev) => ({ ...prev, ...updated, profilePic: updated.profilePic || prev.profilePic }));
+      // Update the therapist data with the response
+      const updatedTherapist = {
+        ...therapist,
+        ...res.data.therapist
+      };
 
-      if (updated.profilePic) {
-        const imageUrl = updated.profilePic.startsWith("http")
-          ? updated.profilePic
-          : `http://localhost:5000${updated.profilePic}`;
+      setTherapist(updatedTherapist);
+      
+      // Update the preview URL with the new image
+      if (res.data.therapist.profilePic) {
+        const imageUrl = res.data.therapist.profilePic.startsWith('http') 
+          ? res.data.therapist.profilePic 
+          : `http://localhost:5000${res.data.therapist.profilePic}`;
         setPreviewUrl(imageUrl);
-      } else {
-        setPreviewUrl("");
       }
 
       setEditing(false);
-      window.dispatchEvent(new Event("profileUpdate"));
+      window.dispatchEvent(new Event('profileUpdate'));
+   
       setMessage("Profile updated successfully!");
       setTimeout(() => setMessage(""), 3000);
     } catch (error) {
       console.error("Update failed:", error);
-      setMessage(
-        `Failed to update profile: ${error.response?.data?.message || error.message}`
-      );
+      setMessage(`Failed to update profile: ${error.response?.data?.message || error.message}`);
     }
   };
 
@@ -126,45 +136,43 @@ const Profile = () => {
     <div className="relative w-full h-screen overflow-hidden">
       <Navbar />
 
+      {/* Background with overlay */}
       <div className="absolute inset-0 z-0">
         <img
           src="/image 22.png"
-          alt="Background"
+          alt="Profile background"
           className="w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-[#365B6D] opacity-60" />
+        <div className="absolute inset-0 bg-[#365B6D] opacity-60"></div>
       </div>
 
+      {/* Main content */}
       <main className="relative z-10 flex items-center justify-center h-full px-6">
         <div className="bg-[#B2D1CF]/50 p-6 rounded-2xl shadow-lg w-full max-w-md text-center text-black">
+          {/* Message display */}
           {message && (
-            <div
-              className={`mb-4 p-2 rounded ${
-                message.toLowerCase().includes("success")
-                  ? "bg-green-100 text-green-800"
-                  : "bg-red-100 text-red-800"
-              }`}
-            >
+            <div className={`mb-4 p-2 rounded ${
+              message.includes("success") ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+            }`}>
               {message}
             </div>
           )}
 
+          {/* Profile picture section */}
           <div className="mb-6">
             <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-gray-300 flex items-center justify-center overflow-hidden relative">
               {previewUrl ? (
-                <img
-                  src={previewUrl}
-                  alt="Profile"
-                  className="w-full h-full object-cover rounded-full"
-                  onError={(e) => {
-                    e.target.src = "/user.png"; // Fallback to default image
-                  }}
+                <img 
+                  src={previewUrl} 
+                  alt="Profile" 
+                  className="w-full h-full object-cover rounded-full" 
+                  onError={() => setPreviewUrl("")} // Fallback if image fails to load
                 />
               ) : (
                 <span className="text-gray-500">No Image</span>
               )}
             </div>
-
+            
             {editing && (
               <div className="mt-2">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -172,6 +180,7 @@ const Profile = () => {
                 </label>
                 <input
                   type="file"
+                  id="profileImage"
                   accept="image/*"
                   className="block w-full text-sm text-gray-500
                     file:mr-4 file:py-2 file:px-4
@@ -185,30 +194,52 @@ const Profile = () => {
             )}
           </div>
 
-          {/* Profile Fields */}
-          {["name", "designation", "hospital"].map((field) => (
-            <div key={field} className="mb-4">
-              <label className="block text-sm font-medium mb-1 capitalize">
-                {field}
-              </label>
+          {/* Profile fieldslists */}
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Name</label>
               {editing ? (
                 <input
                   type="text"
-                  value={therapist[field]}
-                  onChange={(e) =>
-                    setTherapist({ ...therapist, [field]: e.target.value })
-                  }
+                  value={therapist.name}
+                  onChange={(e) => setTherapist({...therapist, name: e.target.value})}
                   className="w-full p-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#365B6D]"
                 />
               ) : (
-                <p className="p-2 rounded bg-[#B2D1CF]/70 inline-block">
-                  {therapist[field] || "Not provided"}
-                </p>
+                <p className="p-2 rounded bg-[#B2D1CF]/70 inline-block">{therapist.name}</p>
               )}
             </div>
-          ))}
 
-          {/* Action Buttons */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Designation</label>
+              {editing ? (
+                <input
+                  type="text"
+                  value={therapist.designation}
+                  onChange={(e) => setTherapist({...therapist, designation: e.target.value})}
+                  className="w-full p-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#365B6D]"
+                />
+              ) : (
+                <p className="p-2 rounded bg-[#B2D1CF]/70 inline-block">{therapist.designation}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">Hospital</label>
+              {editing ? (
+                <input
+                  type="text"
+                  value={therapist.hospital}
+                  onChange={(e) => setTherapist({...therapist, hospital: e.target.value})}
+                  className="w-full p-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#365B6D]"
+                />
+              ) : (
+                <p className="p-2 rounded bg-[#B2D1CF]/70 inline-block">{therapist.hospital}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Action buttons */}
           <div className="mt-6">
             {editing ? (
               <div className="flex space-x-2">
