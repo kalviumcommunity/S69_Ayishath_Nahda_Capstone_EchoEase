@@ -116,7 +116,7 @@ async function createTherapyPlan(req, res) {
       goals: planData.goals,
       activities: planData.activities.map(a => a.name)
     });
-
+ //fetching for yt ai
     const activities = planData.activities.map(activity => ({
       name: activity.name,
       videos: activity.videos.map(v => ({
