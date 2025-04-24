@@ -1,4 +1,3 @@
-// controllers/therapyPlanControllers.js
 const { getTherapyPlan } = require("../data/therapyPlansData");
 const TherapyPlan = require("../models/TherapyPlan");
 const NewPatient = require("../models/Add-newPatient");
@@ -7,7 +6,6 @@ async function generateTherapyPlan(req, res) {
   try {
     const { diagnosis, age, language = 'en' } = req.body;
     
-    // Validate input
     if (!diagnosis || !age) {
       return res.status(400).json({
         status: "error",
@@ -44,13 +42,15 @@ async function generateTherapyPlan(req, res) {
   } catch (error) {
     console.error("Error generating therapy plan:", {
       message: error.message,
-      stack: error.stack
+      stack: error.stack,
+      details: error.response?.data?.error || {}
     });
     res.status(500).json({
       status: "error",
       message: "Failed to generate therapy plan",
       ...(process.env.NODE_ENV === 'development' && {
-        error: error.message
+        error: error.message,
+        details: error.response?.data?.error || {}
       })
     });
   }
@@ -61,7 +61,6 @@ async function createTherapyPlan(req, res) {
     const { patientId } = req.body;
     console.log("Received patientId:", patientId);
 
-    // 1. Get patient with required fields
     const patient = await NewPatient.findById(patientId)
       .select('patientName age diagnosis nativeLanguage')
       .lean();
@@ -82,7 +81,6 @@ async function createTherapyPlan(req, res) {
       language: patient.nativeLanguage
     });
 
-    // 2. Validate required fields
     if (!patient.diagnosis) {
       console.error("Patient missing diagnosis:", patientId);
       return res.status(400).json({
@@ -92,14 +90,13 @@ async function createTherapyPlan(req, res) {
       });
     }
 
-    // 3. Generate plan data with debug logging
     const diagnosisKey = patient.diagnosis.toLowerCase();
     console.log("Searching for diagnosis:", diagnosisKey);
     
     const planData = await getTherapyPlan(
       diagnosisKey,
       patient.age,
-      patient.nativeLanguage || 'en'
+      patient.nativeLanguage || 'en' // Use patient's native language
     );
 
     if (!planData) {
@@ -120,27 +117,19 @@ async function createTherapyPlan(req, res) {
       activities: planData.activities.map(a => a.name)
     });
 
-    // 4. Transform and validate activities
-    const activities = planData.activities.map(activity => {
-      if (!activity.videos) {
-        console.warn("No videos for activity:", activity.name);
-        activity.videos = [];
-      }
-      return {
-        name: activity.name,
-        videos: activity.videos.map(v => ({
-          title: v.title || "No title",
-          url: v.url || "#",
-          thumbnail: v.thumbnail || ""
-        }))
-      };
-    });
+    const activities = planData.activities.map(activity => ({
+      name: activity.name,
+      videos: activity.videos.map(v => ({
+        title: v.title || "No title",
+        url: v.url || "#",
+        thumbnail: v.thumbnail || ""
+      }))
+    }));
 
     const youtubeLinks = activities.flatMap(a => 
       a.videos.filter(v => v.url !== "#").map(v => v.url)
     );
 
-    // 5. Create and save therapy plan
     const therapyPlan = new TherapyPlan({
       patientId,
       patientName: patient.patientName,
@@ -149,7 +138,7 @@ async function createTherapyPlan(req, res) {
       goals: planData.goals || [],
       activities: activities || [],
       youtubeLinks: youtubeLinks || [],
-      aiGenerated: false
+      aiGenerated: true
     });
 
     const savedPlan = await therapyPlan.save();
@@ -165,19 +154,20 @@ async function createTherapyPlan(req, res) {
   } catch (error) {
     console.error("Error in createTherapyPlan:", {
       message: error.message,
-      stack: error.stack
+      stack: error.stack,
+      details: error.response?.data?.error || {}
     });
     res.status(500).json({
       status: "error",
       message: "Failed to create therapy plan",
       ...(process.env.NODE_ENV === 'development' && {
-        error: error.message
+        error: error.message,
+        details: error.response?.data?.error || {}
       })
     });
   }
 }
 
-// Export both functions
 module.exports = {
   generateTherapyPlan,
   createTherapyPlan

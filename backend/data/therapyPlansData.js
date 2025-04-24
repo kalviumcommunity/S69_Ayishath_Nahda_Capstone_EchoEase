@@ -1,4 +1,5 @@
 const axios = require('axios');
+console.log('Loaded YOUTUBE_API_KEY:', process.env.YOUTUBE_API_KEY ? process.env.YOUTUBE_API_KEY.substring(0, 5) + "..." : "undefined");
 
 const therapyPlansData = {
   articulation: {
@@ -242,66 +243,58 @@ const therapyPlansData = {
     }
   }
 };
-
-async function fetchYouTubeVideos(activity, language) {
+async function fetchYouTubeVideos(activity, language, retryCount = 1) {
   try {
-    console.log("Fetching YouTube videos for activity:", activity.name, "Language:", language);
-    console.log("Using API Key:", process.env.YOUTUBE_API_KEY ? "Set" : "Not Set");
-    console.log("Search query:", `${activity.ytKeywords || activity.name} ${language} therapy`);
+    if (!process.env.YOUTUBE_API_KEY) {
+      throw new Error("YouTube API key is not configured in .env");
+    }
 
-    const response = await axios.get('https://www.googleapis.com/youtube/v3/search', {
-      params: {
-        part: 'snippet',
-        q: `${activity.ytKeywords || activity.name} ${language} therapy`,
-        key: process.env.YOUTUBE_API_KEY,
-        maxResults: 3, // Ensure 3 results are requested
-        type: 'video',
-        videoDuration: 'short',
-        safeSearch: 'strict',
-        relevanceLanguage: language
-      }
-    });
+    const baseQuery = activity.ytKeywords || activity.name;
+    const query = language.toLowerCase() === 'hindi' ? `${baseQuery} hindi` : baseQuery;
+    console.log(`Fetching YouTube videos for activity: ${activity.name}, Language: ${language}, Query: ${query}, Attempt: ${retryCount + 1}, Key: ${process.env.YOUTUBE_API_KEY.substring(0, 5)}...`);
+    const params = {
+      part: 'snippet',
+      q: query,
+      key: process.env.YOUTUBE_API_KEY,
+      maxResults: 2,
+      type: 'video',
+      safeSearch: 'strict',
+    };
+    // Add relevanceLanguage only for non-English languages
+    if (language.toLowerCase() !== 'en') {
+      params.relevanceLanguage = language.toLowerCase() === 'hindi' ? 'hi' : language.toLowerCase();
+    }
 
+    const response = await axios.get('https://www.googleapis.com/youtube/v3/search', { params });
+
+    console.log(`YouTube API response for ${activity.name}:`, response.data);
     if (!response.data.items || response.data.items.length === 0) {
-      console.log(`No videos found for ${activity.name}. Response:`, response.data);
-      return [
-        {
-          title: "Speech Therapy Exercise 1",
-          url: "https://youtube.com/watch?v=abc123",
-          thumbnail: "http://img.youtube.com/vi/abc123/mqdefault.jpg"
-        },
-        {
-          title: "Speech Therapy Exercise 2",
-          url: "https://youtube.com/watch?v=def456",
-          thumbnail: "http://img.youtube.com/vi/def456/mqdefault.jpg"
-        }
-      ]; // Return two fallback videos
+      console.log(`No videos found for ${activity.name} with query: ${query}`);
+      return [];
     }
 
     const videos = response.data.items.map(video => ({
       title: video.snippet.title,
       url: `https://youtube.com/watch?v=${video.id.videoId}`,
       thumbnail: video.snippet.thumbnails.medium.url
-    })).slice(0, 2); // Limit to 2 videos even if more are returned
-    console.log(`Fetched videos for ${activity.name}:`, videos);
+    }));
+
+    console.log(`Fetched ${videos.length} videos for ${activity.name}:`, videos.map(v => v.title));
     return videos;
   } catch (error) {
-    console.error('YouTube API error:', error.response ? error.response.data : error.message);
-    console.log("Using fallback videos due to API failure");
-    return [
-      {
-        title: "Speech Therapy Exercise 1",
-        url: "https://youtube.com/watch?v=abc123",
-        thumbnail: "http://img.youtube.com/vi/abc123/mqdefault.jpg"
-      },
-      {
-        title: "Speech Therapy Exercise 2",
-        url: "https://youtube.com/watch?v=def456",
-        thumbnail: "http://img.youtube.com/vi/def456/mqdefault.jpg"
-      }
-    ];
+    console.error(`YouTube API error for ${activity.name}:`, {
+      message: error.message,
+      status: error.response?.status,
+      data: error.response?.data?.error || error.response?.data
+    });
+    if (retryCount > 0 && error.response?.status !== 400) {
+      console.log(`Retrying fetch for ${activity.name}...`);
+      return fetchYouTubeVideos(activity, language, retryCount - 1);
+    }
+    return [];
   }
 }
+
 async function getTherapyPlan(diagnosis, age, language = 'en') {
   const ageGroup = age <= 5 ? "3-5" : age <= 12 ? "6-12" : "13+";
   const plan = therapyPlansData[diagnosis]?.[ageGroup];
@@ -311,10 +304,13 @@ async function getTherapyPlan(diagnosis, age, language = 'en') {
     return null;
   }
 
+  const effectiveLanguage = ['en', 'hindi'].includes(language.toLowerCase()) ? language.toLowerCase() : 'en';
+  console.log(`Using language: ${effectiveLanguage} for diagnosis: ${diagnosis}, age: ${age}`);
+
   const activities = await Promise.all(
     plan.activities.map(async activity => ({
       name: activity.name,
-      videos: await fetchYouTubeVideos(activity, language)
+      videos: await fetchYouTubeVideos(activity, effectiveLanguage)
     }))
   );
 

@@ -5,8 +5,6 @@ const TherapyPlans = () => {
   const { patientId } = useParams();
   const [plan, setPlan] = useState(null);
   const [editMode, setEditMode] = useState(false);
-  const [goals, setGoals] = useState([]);
-  const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -21,9 +19,8 @@ const TherapyPlans = () => {
         });
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const data = await response.json();
+        console.log("Fetched therapy plan data:", data.data); // Debug log
         setPlan(data.data);
-        setGoals(data.data.goals || []);
-        setActivities(data.data.activities || []);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -34,20 +31,32 @@ const TherapyPlans = () => {
   }, [patientId]);
 
   const handleGoalChange = (index, value) => {
-    const updated = [...goals];
-    updated[index] = value;
-    setGoals(updated);
+    if (plan) {
+      const updatedGoals = [...plan.goals];
+      updatedGoals[index] = value;
+      setPlan({ ...plan, goals: updatedGoals });
+    }
   };
 
-  const handleAddGoal = () => setGoals([...goals, ""]);
+  const handleAddGoal = () => {
+    if (plan) {
+      setPlan({ ...plan, goals: [...plan.goals, ""] });
+    }
+  };
 
   const handleActivityChange = (index, field, value) => {
-    const updated = [...activities];
-    updated[index][field] = value;
-    setActivities(updated);
+    if (plan) {
+      const updatedActivities = [...plan.activities];
+      updatedActivities[index] = { ...updatedActivities[index], [field]: value };
+      setPlan({ ...plan, activities: updatedActivities });
+    }
   };
 
-  const handleAddActivity = () => setActivities([...activities, { name: "", videos: [] }]);
+  const handleAddActivity = () => {
+    if (plan) {
+      setPlan({ ...plan, activities: [...plan.activities, { name: "", videos: [] }] });
+    }
+  };
 
   const handleSave = async () => {
     try {
@@ -57,7 +66,7 @@ const TherapyPlans = () => {
           'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ goals, activities }),
+        body: JSON.stringify({ goals: plan.goals, activities: plan.activities }),
       });
       if (!res.ok) throw new Error("Failed to save changes");
       const updatedPlan = await res.json();
@@ -70,6 +79,9 @@ const TherapyPlans = () => {
 
   if (loading) return <div className="text-center p-4">Loading...</div>;
   if (error) return <div className="text-red-500 text-center p-4">Error: {error}</div>;
+  if (!plan) return <div className="text-center p-4">No plan available</div>;
+
+  const { goals, activities } = plan;
 
   return (
     <div className="min-h-screen p-6 sm:p-10 bg-cover bg-center" style={{
@@ -91,7 +103,7 @@ const TherapyPlans = () => {
                 {editMode ? (
                   <input
                     type="text"
-                    value={goal}
+                    value={goal || ""}
                     onChange={(e) => handleGoalChange(index, e.target.value)}
                     className="w-full px-3 py-2 rounded border border-gray-300 focus:outline-none focus:ring focus:ring-teal-300"
                   />
@@ -109,17 +121,46 @@ const TherapyPlans = () => {
           <div>
             <h2 className="text-xl sm:text-2xl font-bold text-teal-800 mb-3">Activities</h2>
             {activities.map((activity, index) => (
-              <div key={index} className="mb-4">
+              <div key={activity._id} className="mb-4">
                 {editMode ? (
                   <input
                     type="text"
-                    value={activity.name}
+                    value={activity.name || ""}
                     onChange={(e) => handleActivityChange(index, 'name', e.target.value)}
                     placeholder="Activity Name"
                     className="w-full px-3 py-2 rounded border border-gray-300 focus:outline-none focus:ring focus:ring-teal-300"
                   />
                 ) : (
-                  <p className="font-medium text-gray-800">• {activity.name}</p>
+                  <div>
+                    <p className="font-medium text-gray-800">• {activity.name}</p>
+                    {activity.videos && activity.videos.length > 0 ? (
+                      <div className="ml-4 mt-2">
+                        <p className="text-sm text-gray-600">Related Videos:</p>
+                        {activity.videos.map((video, vidIndex) => (
+                          <div key={video._id} className="flex items-center mt-1">
+                            <img
+                              src={video.thumbnail}
+                              alt={video.title}
+                              className="w-16 h-12 mr-2 rounded"
+                              onError={(e) => {
+                                e.target.src = 'https://via.placeholder.com/64x48?text=No+Thumbnail';
+                              }}
+                            />
+                            <a
+                              href={video.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:underline text-sm"
+                            >
+                              {video.title}
+                            </a>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-500 ml-4 mt-2">No videos available for this activity.</p>
+                    )}
+                  </div>
                 )}
               </div>
             ))}
@@ -142,8 +183,7 @@ const TherapyPlans = () => {
               <button
                 onClick={() => {
                   setEditMode(false);
-                  setGoals(plan.goals);
-                  setActivities(plan.activities);
+                  setPlan(plan); // Reset to original plan data
                 }}
                 className="bg-white border border-teal-700 text-teal-700 hover:bg-teal-50 px-6 py-2 rounded-full shadow transition"
               >

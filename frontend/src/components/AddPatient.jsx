@@ -9,30 +9,37 @@ const AddPatient = () => {
         patientName: '',
         age: '',
         diagnosis: '',
-        nativeLanguage: '',
-        languageOption: 'English'
+        aphasiaSeverity: '',
+        nativeLanguage: 'hindi', // Default to match languageOption
+        languageOption: 'Hindi'
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [duplicateWarning, setDuplicateWarning] = useState(null);
 
-    const commonLanguages = ['English', 'Spanish', 'French', 'German', 'Chinese', 'Hindi', 'Arabic', 'Other'];
+    const commonLanguages = ['Hindi', 'Kannada', 'Malayalam', 'Tamil', 'Telugu', 'Others'];
     const diagnosisOptions = ['articulation', 'language', 'stuttering', 'apraxia', 'aphasia', 'pragmatic'];
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: value,
-            ...(name === 'languageOption' && value !== 'Other' ? { nativeLanguage: value.toLowerCase() } : {}),
-            ...(name === 'languageOption' && value === 'Other' ? { nativeLanguage: '' } : {})
-        }));
+        setFormData(prev => {
+            const newFormData = {
+                ...prev,
+                [name]: value,
+                ...(name === 'diagnosis' && value !== 'aphasia' ? { aphasiaSeverity: '' } : {}),
+            };
+            // Ensure nativeLanguage updates when languageOption changes
+            if (name === 'languageOption') {
+                newFormData.nativeLanguage = value === 'Others' ? '' : value.toLowerCase();
+            }
+            return newFormData;
+        });
     };
 
     const handleCustomLanguageChange = (e) => {
         setFormData(prev => ({
             ...prev,
-            nativeLanguage: e.target.value.toLowerCase()
+            nativeLanguage: e.target.value.trim().toLowerCase()
         }));
     };
 
@@ -43,6 +50,11 @@ const AddPatient = () => {
         }
         try {
             const token = localStorage.getItem('token');
+            if (!token) {
+                setDuplicateWarning('Please log in to check for duplicates');
+                return;
+            }
+            console.log('Duplicate check token:', token.substring(0, 10) + '...');
             const response = await axios.get(
                 `http://localhost:5000/api/patients?search=${encodeURIComponent(patientName)}`,
                 { headers: { Authorization: `Bearer ${token}` } }
@@ -54,24 +66,36 @@ const AddPatient = () => {
             setDuplicateWarning(duplicate ? 
                 `A patient with the name "${patientName}" and language "${nativeLanguage}" already exists.` : null);
         } catch (error) {
-            console.error('Duplicate check failed:', error);
+            console.error('Duplicate check failed:', error.response?.status, error.response?.data || error.message);
+            if (error.response?.status === 401) {
+                setDuplicateWarning('Session expired. Please log in again.');
+                navigate('/login');
+            }
         }
     }, 500);
 
     useEffect(() => {
         checkForDuplicate(formData.patientName.trim(), formData.nativeLanguage.trim());
-    }, [formData.patientName, formData.nativeLanguage]);
+    }, [formData.patientName, formData.nativeLanguage, navigate]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         setError(null);
 
-        const { patientName, age, diagnosis, nativeLanguage } = formData;
+        const { patientName, age, diagnosis, aphasiaSeverity, nativeLanguage } = formData;
         const trimmedName = patientName.trim();
-        const trimmedDiagnosis = diagnosis.trim().toLowerCase();
+        let finalDiagnosis = diagnosis.trim().toLowerCase();
         const trimmedLanguage = nativeLanguage.trim();
         const ageNumber = Number(age);
+
+        // Debug logging
+        console.log('Form data before validation:', formData);
+
+        // Combine diagnosis with severity for aphasia
+        if (diagnosis === 'aphasia' && aphasiaSeverity) {
+            finalDiagnosis = `aphasia-${aphasiaSeverity.toLowerCase()}`;
+        }
 
         // Validation
         if (trimmedName.length < 2) {
@@ -84,8 +108,13 @@ const AddPatient = () => {
             setLoading(false);
             return;
         }
-        if (!diagnosisOptions.includes(trimmedDiagnosis)) {
+        if (!diagnosisOptions.includes(diagnosis.toLowerCase())) {
             setError('Please select a valid diagnosis from the list');
+            setLoading(false);
+            return;
+        }
+        if (diagnosis === 'aphasia' && !aphasiaSeverity) {
+            setError('Please select the severity for aphasia');
             setLoading(false);
             return;
         }
@@ -101,8 +130,9 @@ const AddPatient = () => {
             setLoading(false);
             return;
         }
+        console.log('Submission token:', token.substring(0, 10) + '...');
 
-        const patientPayload = { patientName: trimmedName, age: ageNumber, diagnosis: trimmedDiagnosis, nativeLanguage: trimmedLanguage };
+        const patientPayload = { patientName: trimmedName, age: ageNumber, diagnosis: finalDiagnosis, nativeLanguage: trimmedLanguage };
 
         try {
             // Create patient
@@ -124,8 +154,14 @@ const AddPatient = () => {
                 state: { patient: patientResponse.data.patient, plan: planResponse.data.data }
             });
         } catch (error) {
-            console.error('Submission error:', error.response?.data || error.message);
-            setError(error.response?.data?.message || 'Failed to create patient/therapy plan');
+            console.error('Submission error:', error.response?.status, error.response?.data || error.message);
+            if (error.response?.status === 401) {
+                setError('Session expired. Please log in again.');
+                localStorage.removeItem('token');
+                setTimeout(() => navigate('/login'), 2000);
+            } else {
+                setError(error.response?.data?.message || 'Failed to create patient/therapy plan');
+            }
         } finally {
             setLoading(false);
         }
@@ -184,6 +220,22 @@ const AddPatient = () => {
                             ))}
                         </select>
                     </div>
+                    {formData.diagnosis === 'aphasia' && (
+                        <div className="flex justify-between items-center">
+                            <label className="text-lg font-semibold text-black">Aphasia Severity</label>
+                            <select
+                                name="aphasiaSeverity"
+                                value={formData.aphasiaSeverity}
+                                onChange={handleChange}
+                                className="w-80 p-2 bg-transparent border-b border-black text-gray-700 outline-none"
+                                required
+                            >
+                                <option value="">Select Severity</option>
+                                <option value="mild">Mild</option>
+                                <option value="moderate">Moderate</option>
+                            </select>
+                        </div>
+                    )}
                     <div className="flex justify-between items-center">
                         <label className="text-lg font-semibold text-black">Native Language</label>
                         <div className="w-80">
@@ -192,19 +244,20 @@ const AddPatient = () => {
                                 value={formData.languageOption}
                                 onChange={handleChange}
                                 className="w-full p-2 bg-transparent border-b border-black text-gray-700 outline-none"
+                                required
                             >
                                 {commonLanguages.map(lang => (
                                     <option key={lang} value={lang}>{lang}</option>
                                 ))}
                             </select>
-                            {formData.languageOption === 'Other' && (
+                            {formData.languageOption === 'Others' && (
                                 <input
                                     type="text"
                                     name="customLanguage"
                                     value={formData.nativeLanguage}
                                     onChange={handleCustomLanguageChange}
                                     className="w-full mt-2 p-2 bg-transparent border-b border-black text-gray-700 placeholder-gray-500 outline-none"
-                                    placeholder="Enter custom language.."
+                                    placeholder="Specify language (e.g., Bengali, Marathi)..."
                                     required
                                 />
                             )}

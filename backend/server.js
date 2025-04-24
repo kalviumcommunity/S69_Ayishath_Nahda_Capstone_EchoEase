@@ -1,7 +1,6 @@
-require("dotenv").config();
-
 const express = require("express");
 const mongoose = require("mongoose");
+require("dotenv").config();
 const cors = require("cors");
 const path = require("path");
 
@@ -11,7 +10,12 @@ const authRoutes = require("./routes/authRoutes");
 const patientRoutes = require("./routes/patientRoutes");
 const therapyPlansRoutes = require("./routes/therapyPlanRoutes");
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT; // Remove default 4000 to enforce .env value
+
+console.log("Loaded environment variables:", {
+  PORT: process.env.PORT,
+  YOUTUBE_API_KEY: process.env.YOUTUBE_API_KEY ? process.env.YOUTUBE_API_KEY.substring(0, 5) + "..." : "undefined"
+});
 
 const app = express();
 app.use(express.json());

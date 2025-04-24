@@ -1,0 +1,20 @@
+meta {
+  name: yt
+  type: http
+  seq: 14
+}
+
+get {
+  url: https://www.googleapis.com/youtube/v3/search?part=snippet&q=stuttering%20therapy%20hindi%20therapy&key=AIzaSyAa6TPC48e4WdUblhha3qIaA9P3_iWdzNo&maxResults=2&type=video&safeSearch=strict
+  body: none
+  auth: inherit
+}
+
+params:query {
+  part: snippet
+  q: stuttering therapy hindi therapy
+  key: AIzaSyAa6TPC48e4WdUblhha3qIaA9P3_iWdzNo
+  maxResults: 2
+  type: video
+  safeSearch: strict
+}

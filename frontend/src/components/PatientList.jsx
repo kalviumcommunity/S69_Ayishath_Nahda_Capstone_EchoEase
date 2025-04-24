@@ -47,14 +47,14 @@ const PatientList = () => {
         return;
       }
 
-      if (window.confirm("Are you sure you want to delete this patient?")) {
+      
         await axios.delete(`http://localhost:5000/api/patients/${patientId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         
         toast.success("Patient deleted successfully");
         fetchPatients();
-      }
+      
     } catch (err) {
       toast.error(err.response?.data?.error || "Failed to delete patient");
     }
