@@ -18,7 +18,7 @@ const ResetPassword = () => {
       }
   
       try {
-        const response = await axios.post("http://localhost:5000/api/auth/reset-password", { email, newPassword });
+        const response = await axios.post(`${import.meta.env.VITE_META_URI}/api/auth/reset-password`, { email, newPassword });
         setMessage(response.data.message);
       //   setSuccess(true); 
         localStorage.removeItem("resetEmail"); // Clear stored email/

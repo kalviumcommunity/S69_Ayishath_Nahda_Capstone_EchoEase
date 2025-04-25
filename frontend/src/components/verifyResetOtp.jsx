@@ -12,7 +12,7 @@ const VerifyResetOtp = () => {
   const handleVerifyOtp = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post("http://localhost:5000/api/auth/verify-reset-otp", { email, otp });
+      const response = await axios.post(`${import.meta.env.VITE_META_URI}/api/auth/verify-reset-otp`, { email, otp });
       setMessage(response.data.message);
       navigate("/reset-password"); // Redirect to reset password page
     } catch (error) {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';  //
+import { useParams } from 'react-router-dom';
 
 const TherapyPlans = () => {
   const { patientId } = useParams();
@@ -8,25 +8,26 @@ const TherapyPlans = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const fetchTherapyPlan = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`${import.meta.env.VITE_META_URI}/api/therapy-plans/patient/${patientId}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      const data = await response.json();
+      setPlan(data.data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchTherapyPlan = async () => {
-      try {
-        const response = await fetch(`http://localhost:5000/api/therapy-plans/patient/${patientId}`, {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
-            'Content-Type': 'application/json'
-          }
-        });
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        const data = await response.json();
-        console.log("Fetched therapy plan data:", data.data); // Debug log
-        setPlan(data.data);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchTherapyPlan();
   }, [patientId]);
 
@@ -60,7 +61,7 @@ const TherapyPlans = () => {
 
   const handleSave = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/therapy-plans/${plan._id}`, {
+      const res = await fetch(`${import.meta.env.VITE_META_URI}/api/therapy-plans/${plan._id}`, {
         method: "PUT",
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
@@ -77,11 +78,31 @@ const TherapyPlans = () => {
     }
   };
 
-  if (loading) return <div className="text-center p-4">Loading...</div>;
+  if (loading) return (
+    <div className="min-h-screen p-6 sm:p-10 bg-cover bg-center" style={{
+      backgroundImage: `linear-gradient(rgba(54, 91, 109, 0.59), rgba(54, 91, 109, 0.59)), url('https://i.pinimg.com/736x/0c/ca/d1/0ccad1b5d5d43afd2ad36ba4ae7cb977.jpg')`
+    }}>
+      <div className="max-w-4xl mx-auto bg-[#B2D1CF]/80 p-8 sm:p-10 rounded-2xl shadow-xl min-h-[500px]">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 bg-gray-300 rounded w-3/4"></div>
+          <div className="space-y-2">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="h-4 bg-gray-300 rounded w-full"></div>
+            ))}
+          </div>
+          <div className="h-8 bg-gray-300 rounded w-3/4 mt-6"></div>
+          <div className="space-y-2">
+            {[...Array(2)].map((_, i) => (
+              <div key={i} className="h-4 bg-gray-300 rounded w-full"></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   if (error) return <div className="text-red-500 text-center p-4">Error: {error}</div>;
   if (!plan) return <div className="text-center p-4">No plan available</div>;
-
-  const { goals, activities } = plan;
 
   return (
     <div className="min-h-screen p-6 sm:p-10 bg-cover bg-center" style={{
@@ -90,15 +111,25 @@ const TherapyPlans = () => {
       <div className="max-w-4xl mx-auto bg-[#B2D1CF]/80 p-8 sm:p-10 rounded-2xl shadow-xl min-h-[500px] flex flex-col justify-between">
         <div className="flex justify-between items-center mb-6">
           <button onClick={() => window.history.back()} className="text-teal-900 text-sm hover:underline">← Back</button>
-          <h1 className="text-2xl font-semibold text-teal-900 text-center">Patient's Therapy Plan</h1>
+          <div className="text-center">
+            <h1 className="text-2xl font-semibold text-teal-900">Patient's Therapy Plan</h1>
+            {plan.diagnosis && (
+              <div className="text-sm text-teal-800">
+                Diagnosis: {plan.diagnosis}
+                {plan.diagnosis.toLowerCase() === 'aphasia' && plan.aphasiaSeverity && (
+                  <span> (Severity: {plan.aphasiaSeverity})</span>
+                )}
+              </div>
+            )}
+          </div>
           <img src="/logo.png" alt="EchoEase" className="w-[120px]" />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Goals */}
+          {/* Goals Section */}
           <div>
             <h2 className="text-xl sm:text-2xl font-bold text-teal-800 mb-3">Goals</h2>
-            {goals.map((goal, index) => (
+            {plan.goals.map((goal, index) => (
               <div key={index} className="mb-2">
                 {editMode ? (
                   <input
@@ -117,11 +148,11 @@ const TherapyPlans = () => {
             )}
           </div>
 
-          {/* Activities */}
+          {/* Activities Section */}
           <div>
             <h2 className="text-xl sm:text-2xl font-bold text-teal-800 mb-3">Activities</h2>
-            {activities.map((activity, index) => (
-              <div key={activity._id} className="mb-4">
+            {plan.activities.map((activity, index) => (
+              <div key={index} className="mb-4">
                 {editMode ? (
                   <input
                     type="text"
@@ -133,26 +164,23 @@ const TherapyPlans = () => {
                 ) : (
                   <div>
                     <p className="font-medium text-gray-800">• {activity.name}</p>
-                    {activity.videos && activity.videos.length > 0 ? (
+                    {activity.videos?.length > 0 ? (
                       <div className="ml-4 mt-2">
                         <p className="text-sm text-gray-600">Related Videos:</p>
                         {activity.videos.map((video, vidIndex) => (
-                          <div key={video._id} className="flex items-center mt-1">
+                          <div key={vidIndex} className="flex items-center mt-1">
                             <img
-                              src={video.thumbnail}
-                              alt={video.title}
+                              src={video.thumbnail || 'https://via.placeholder.com/64x48?text=No+Thumbnail'}
+                              alt={video.title || 'Video thumbnail'}
                               className="w-16 h-12 mr-2 rounded"
-                              onError={(e) => {
-                                e.target.src = 'https://via.placeholder.com/64x48?text=No+Thumbnail';
-                              }}
                             />
                             <a
-                              href={video.url}
+                              href={video.url || '#'}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="text-blue-600 hover:underline text-sm"
                             >
-                              {video.title}
+                              {video.title || 'Untitled video'}
                             </a>
                           </div>
                         ))}
@@ -170,7 +198,7 @@ const TherapyPlans = () => {
           </div>
         </div>
 
-        {/* Buttons */}
+        {/* Action Buttons */}
         <div className="flex justify-center gap-4 mt-8">
           {editMode ? (
             <>
@@ -182,8 +210,10 @@ const TherapyPlans = () => {
               </button>
               <button
                 onClick={() => {
-                  setEditMode(false);
-                  setPlan(plan); // Reset to original plan data
+                  if (window.confirm('Are you sure you want to discard your changes?')) {
+                    setEditMode(false);
+                    fetchTherapyPlan();
+                  }
                 }}
                 className="bg-white border border-teal-700 text-teal-700 hover:bg-teal-50 px-6 py-2 rounded-full shadow transition"
               >
