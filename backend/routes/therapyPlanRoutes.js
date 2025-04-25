@@ -49,7 +49,7 @@ router.put("/:id", authMiddleware, async (req, res) => {
     if (!updatedPlan) {
       return res.status(404).json({
         status: "error",
-        message: "Therapy plan not found"
+       message: "Therapy plan not found"
       });
     }
 

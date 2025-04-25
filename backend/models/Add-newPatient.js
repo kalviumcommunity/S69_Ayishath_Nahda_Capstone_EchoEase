@@ -13,6 +13,9 @@ const NewPatientSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    aphasiaSeverity:{
+        type:String
+    },
     diagnosis: {
         type: String,
         required: true
