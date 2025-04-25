@@ -56,7 +56,7 @@ const AddPatient = () => {
             }
             console.log('Duplicate check token:', token.substring(0, 10) + '...');
             const response = await axios.get(
-                `http://localhost:5000/api/patients?search=${encodeURIComponent(patientName)}`,
+                `${import.meta.env.VITE_META_URI}/api/patients?search=${encodeURIComponent(patientName)}`,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             const duplicate = response.data.data.find(
@@ -137,7 +137,7 @@ const AddPatient = () => {
         try {
             // Create patient
             const patientResponse = await axios.post(
-                'http://localhost:5000/api/patients',
+                `${import.meta.env.VITE_META_URI}/api/patients`,
                 patientPayload,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -145,7 +145,7 @@ const AddPatient = () => {
 
             // Create therapy plan
             const planResponse = await axios.post(
-                'http://localhost:5000/api/therapy-plans',
+                `${import.meta.env.VITE_META_URI}/api/therapy-plans`,
                 { patientId },
                 { headers: { Authorization: `Bearer ${token}` } }
             );

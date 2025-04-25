@@ -24,7 +24,7 @@ const PatientList = () => {
         return;
       }
 
-      const response = await axios.get("http://localhost:5000/api/patients", {
+      const response = await axios.get(`${import.meta.env.VITE_META_URI}/api/patients`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -48,7 +48,7 @@ const PatientList = () => {
       }
 
       
-        await axios.delete(`http://localhost:5000/api/patients/${patientId}`, {
+        await axios.delete(`${import.meta.env.VITE_META_URI}/api/patients/${patientId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         
