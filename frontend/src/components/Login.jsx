@@ -18,7 +18,7 @@ const Login = () => {
     console.log("Login attempt:", { email: trimmedEmail });
 
     try {
-      const response = await fetch(`https://s69-ayishath-nahda-capstone-echoease.onrender.com/api/auth/login`, {
+      const response = await fetch(`${import.meta.env.VITE_META_URI}/api/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
