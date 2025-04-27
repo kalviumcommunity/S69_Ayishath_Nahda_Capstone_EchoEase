@@ -14,9 +14,14 @@ const TherapyPlans = () => {
   const fetchTherapyPlan = async () => {
     try {
       setLoading(true);
+      setError(null); // Clear previous errors
       const token = localStorage.getItem("token") || "";
       if (!token) {
         throw new Error("No token found, please log in");
+      }
+
+      if (!patientId) {
+        throw new Error("Patient ID is required");
       }
 
       const patientResponse = await fetch(`${import.meta.env.VITE_META_URI}/api/patients/${patientId}`, {
@@ -62,6 +67,7 @@ const TherapyPlans = () => {
       }
     } catch (err) {
       setError(err.message);
+      console.error("Fetch error:", err);
     } finally {
       setLoading(false);
     }
@@ -129,20 +135,41 @@ const TherapyPlans = () => {
 
   const handleSave = async () => {
     try {
+      // Validate plan data before sending
+      if (!plan || !plan._id) {
+        throw new Error("Invalid plan data");
+      }
+
+      // Validate required fields
+      if (!plan.goals || !Array.isArray(plan.goals)) {
+        throw new Error("Goals must be an array");
+      }
+
       const res = await fetch(`${import.meta.env.VITE_META_URI}/api/therapy-plans/${plan._id}`, {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(plan), // Send the entire plan object
+        body: JSON.stringify({
+          ...plan,
+          goals: plan.goals.filter(goal => goal.trim()), // Remove empty goals
+          activities: plan.activities || [] // Ensure activities is defined
+        })
       });
-      if (!res.ok) throw new Error("Failed to save changes");
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || `Server error: ${res.status}`);
+      }
+      
       const updatedPlan = await res.json();
-      setPlan(updatedPlan.data); // Update state with the response
+      setPlan(updatedPlan.data);
       setEditMode(false);
+      setError(null); // Clear any previous errors
     } catch (err) {
-      alert("Error saving data: " + err.message);
+      setError(`Failed to save changes: ${err.message}`);
+      console.error("Save error:", err);
     }
   };
 
