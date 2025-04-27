@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { FaTrash, FaHome, FaSearch } from "react-icons/fa";
+import { FaTrash, FaHome, FaSearch, FaArrowLeft, FaArrowRight } from "react-icons/fa";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -11,12 +11,15 @@ const PatientList = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalPatients, setTotalPatients] = useState(0);
 
   useEffect(() => {
-    fetchPatients();
-  }, []);
+    fetchPatients(currentPage);
+  }, [currentPage]);
 
-  const fetchPatients = async () => {
+  const fetchPatients = async (page) => {
     try {
       const token = localStorage.getItem("token");
       if (!token) {
@@ -24,11 +27,13 @@ const PatientList = () => {
         return;
       }
 
-      const response = await axios.get(`${import.meta.env.VITE_META_URI}/api/patients`, {
+      const response = await axios.get(`${import.meta.env.VITE_META_URI}/api/patients?page=${page}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
       setPatients(response.data.data);
+      setTotalPages(response.data.pagination?.totalPages || 1);
+      setTotalPatients(response.data.pagination?.totalPatients || response.data.data.length);
     } catch (err) {
       setError(err.response?.data?.error || "Failed to fetch patients");
       toast.error("Failed to fetch patients");
@@ -37,7 +42,6 @@ const PatientList = () => {
     }
   };
 
-  // Delete functionality
   const handleDelete = async (patientId, e) => {
     e.stopPropagation();
     try {
@@ -47,25 +51,35 @@ const PatientList = () => {
         return;
       }
 
-      
-        await axios.delete(`${import.meta.env.VITE_META_URI}/api/patients/${patientId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        
-        toast.success("Patient deleted successfully");
-        fetchPatients();
-      
+      await axios.delete(`${import.meta.env.VITE_META_URI}/api/patients/${patientId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      toast.success("Patient deleted successfully");
+      fetchPatients(currentPage);
     } catch (err) {
       toast.error(err.response?.data?.error || "Failed to delete patient");
     }
   };
 
-  const filteredPatients = patients.filter(patient =>
+  const filteredPatients = patients.filter((patient) =>
     patient?.patientName?.toLowerCase()?.includes(searchTerm.toLowerCase())
   );
 
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
   return (
-    <div 
+    <div
       className="min-h-screen bg-cover bg-center relative flex items-center justify-center"
       style={{ backgroundImage: `url('https://i.pinimg.com/736x/0c/ca/d1/0ccad1b5d5d43afd2ad36ba4ae7cb977.jpg')` }}
     >
@@ -73,17 +87,16 @@ const PatientList = () => {
       <div className="relative z-10 max-w-4xl w-full bg-[#B2D1CF] bg-opacity-80 p-6 rounded-lg shadow-lg">
         <header className="flex justify-between items-center mb-4 px-4">
           <img src="/logo.png" alt="Logo" className="h-25" />
-          {/* Use a single button for navigation with the home icon */}
-          <button 
+          <button
             onClick={() => navigate("/dashboard")}
             className="text-[#365B6D] hover:text-[#2a4758] transition-colors transition-transform transform hover:scale-105"
           >
-            <FaHome className="h-7 w-7 object-contain" /> {/* Replaced img with FaHome icon */}
+            <FaHome className="h-7 w-7 object-contain" />
           </button>
         </header>
-        
+
         <h1 className="text-2xl font-semibold text-[#365B6D] text-center mb-4">Patient List</h1>
-        
+
         <div className="relative mb-4">
           <FaSearch className="absolute left-3 top-3 text-gray-500" />
           <input
@@ -100,32 +113,67 @@ const PatientList = () => {
         ) : error ? (
           <div className="text-center text-red-500">{error}</div>
         ) : (
-          <div className="space-y-3">
-            {filteredPatients.map((patient, index) => (
-              <div
-                key={patient._id}
-                className="flex items-center justify-between p-3 bg-white bg-opacity-90 rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-                onClick={() => navigate(`/therapy-plans/patient/${patient._id}`)}
-              >
-                <div className="flex items-center">
-                  <span className="text-[#365B6D] font-medium mr-4 w-6 text-right">
-                    {index + 1}.
-                  </span>
-                  <div>
-                    <h3 className="text-lg text-[#365B6D] font-medium">{patient.patientName}</h3>
-                    <p className="text-sm text-gray-600">{patient.age} years</p>
-                  </div>
-                </div>
-                <button
-                  onClick={(e) => handleDelete(patient._id, e)}
-                  className="text-red-500 hover:text-red-700 p-2 rounded-full hover:bg-red-100 transition-colors"
-                  aria-label="Delete patient"
+          <>
+            <div className="space-y-3">
+              {filteredPatients.map((patient, index) => (
+                <div
+                  key={patient._id}
+                  className="flex items-center justify-between p-3 bg-white bg-opacity-90 rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                  onClick={() => navigate(`/therapy-plans/patient/${patient._id}`)}
                 >
-                  <FaTrash />
+                  <div className="flex items-center">
+                    <span className="text-[#365B6D] font-medium mr-4 w-6 text-right">
+                      {(currentPage - 1) * 10 + index + 1}.
+                    </span>
+                    <div>
+                      <h3 className="text-lg text-[#365B6D] font-medium">{patient.patientName}</h3>
+                      <p className="text-sm text-gray-600">{patient.age} years</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={(e) => handleDelete(patient._id, e)}
+                    className="text-red-500 hover:text-red-700 p-2 rounded-full hover:bg-red-100 transition-colors"
+                    aria-label="Delete patient"
+                  >
+                    <FaTrash />
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex justify-between items-center mt-6">
+                <button
+                  onClick={handlePreviousPage}
+                  disabled={currentPage === 1}
+                  className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-colors ${
+                    currentPage === 1
+                      ? "bg-gray-300 cursor-not-allowed"
+                      : "bg-[#365B6D] text-white hover:bg-[#2a4758]"
+                  }`}
+                >
+                  <FaArrowLeft />
+                  <span>Previous</span>
+                </button>
+                <span className="text-[#365B6D] font-medium">
+                  Page {currentPage} of {totalPages} (Total: {totalPatients})
+                </span>
+                <button
+                  onClick={handleNextPage}
+                  disabled={currentPage === totalPages}
+                  className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-colors ${
+                    currentPage === totalPages
+                      ? "bg-gray-300 cursor-not-allowed"
+                      : "bg-[#365B6D] text-white hover:bg-[#2a4758]"
+                  }`}
+                >
+                  <span>Next</span>
+                  <FaArrowRight />
                 </button>
               </div>
-            ))}
-          </div>
+            )}
+          </>
         )}
       </div>
     </div>

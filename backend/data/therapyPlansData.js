@@ -1,4 +1,6 @@
+// therapyPlansData.js
 const axios = require("axios");
+
 console.log(
   "Loaded YOUTUBE_API_KEY:",
   process.env.YOUTUBE_API_KEY
@@ -256,6 +258,10 @@ async function fetchYouTubeVideos(activity) {
     }
 
     const baseQuery = activity.ytKeywords || activity.name;
+    if (!baseQuery) {
+      throw new Error("No search query provided for YouTube API");
+    }
+
     console.log(
       `Fetching YouTube videos for activity: ${activity.name}, Query: ${baseQuery}, Key: ${process.env.YOUTUBE_API_KEY.substring(
         0,
@@ -264,12 +270,12 @@ async function fetchYouTubeVideos(activity) {
     );
     const params = {
       part: "snippet",
-      q: `${baseQuery} therapy`, // Always English query
+      q: `${baseQuery} therapy`,
       key: process.env.YOUTUBE_API_KEY,
       maxResults: 2,
       type: "video",
       safeSearch: "strict",
-      relevanceLanguage: "en", // Force English results
+      relevanceLanguage: "en",
     };
 
     const response = await axios.get("https://www.googleapis.com/youtube/v3/search", { params });
@@ -285,7 +291,7 @@ async function fetchYouTubeVideos(activity) {
     const videos = response.data.items.map((video) => ({
       title: video.snippet.title,
       url: `https://youtube.com/watch?v=${video.id.videoId}`,
-      thumbnail: video.snippet.thumbnails.medium?.url,
+      thumbnail: video.snippet.thumbnails.medium?.url || null,
     }));
 
     console.log(`Fetched ${videos.length} videos for ${activity.name}:`, videos.map((v) => v.title));
@@ -294,46 +300,52 @@ async function fetchYouTubeVideos(activity) {
     console.error(`YouTube API error for ${activity.name}:`, {
       message: error.message,
       status: error.response?.status,
+      details: error.response?.data?.error?.message || "No additional details"
     });
-    if (retryCount > 0 && error.response?.status !== 400) {
-      console.log(`Retrying fetch for ${activity.name}...`);
-      return fetchYouTubeVideos(activity, retryCount - 1);
-    }
-    return [];
+    throw new Error(`Failed to fetch YouTube videos: ${error.message}`);
   }
 }
 
 async function getTherapyPlan(diagnosis, age, language = "en", severity = null) {
+  if (!diagnosis) {
+    throw new Error("Diagnosis is required");
+  }
+  if (!age || isNaN(age) || age < 0) {
+    throw new Error("Valid age is required");
+  }
+  if (!Object.keys(therapyPlansData).includes(diagnosis.toLowerCase())) {
+    throw new Error(`Invalid diagnosis: ${diagnosis}`);
+  }
+
   console.log(`Received input: diagnosis=${diagnosis}, age=${age}, language=${language}, severity=${severity}`);
 
   let planKey;
+  let plan;
 
   if (diagnosis.toLowerCase() === "aphasia") {
-    if (!severity) {
-      console.log(`Severity is required for diagnosis: ${diagnosis}`);
-      return null;
+    if (!severity || !["mild", "moderate"].includes(severity.toLowerCase())) {
+      throw new Error("Valid severity (mild or moderate) is required for Aphasia diagnosis");
     }
     planKey = severity.toLowerCase();
     console.log(`Using severity key: ${planKey} for aphasia`);
-    if (!therapyPlansData.aphasia[planKey]) {
+    
+    plan = therapyPlansData.aphasia?.[planKey];
+    if (!plan) {
       console.log(`No aphasia plan found for severity: ${planKey}`);
-      return null;
+      throw new Error(`No plan template found for Aphasia with severity: ${planKey}`);
     }
   } else {
     const ageGroup = age <= 5 ? "3-5" : age <= 12 ? "6-12" : "13+";
     planKey = ageGroup;
     console.log(`Using age group key: ${planKey} for ${diagnosis}`);
+    
+    plan = therapyPlansData[diagnosis.toLowerCase()]?.[planKey];
+    if (!plan) {
+      console.log(`No plan found for diagnosis: ${diagnosis}, key: ${planKey}`);
+      throw new Error(`No plan template found for diagnosis: ${diagnosis} and age group: ${planKey}`);
+    }
   }
 
-  console.log(`Looking up plan in therapyPlansData[${diagnosis.toLowerCase()}][${planKey}]`);
-  const plan = therapyPlansData[diagnosis.toLowerCase()]?.[planKey];
-
-  if (!plan) {
-    console.log(`No plan found for diagnosis: ${diagnosis}, key: ${planKey}`);
-    return null;
-  }
-
-  // Use "en" for video fetching, store language for data
   const activities = await Promise.all(
     plan.activities.map(async (activity) => ({
       name: activity.name,
@@ -345,8 +357,8 @@ async function getTherapyPlan(diagnosis, age, language = "en", severity = null) 
   return {
     goals: plan.goals,
     activities,
-    language: language, // Store native language for data
+    language: language,
   };
 }
 
-module.exports = { getTherapyPlan, therapyPlansData };
+module.exports = { getTherapyPlan, therapyPlansData, fetchYouTubeVideos };

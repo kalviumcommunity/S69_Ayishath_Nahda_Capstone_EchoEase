@@ -1,3 +1,4 @@
+// AddPatient.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -28,7 +29,6 @@ const AddPatient = () => {
                 [name]: value,
                 ...(name === 'diagnosis' && value !== 'aphasia' ? { aphasiaSeverity: '' } : {}),
             };
-            // Ensure nativeLanguage updates when languageOption changes
             if (name === 'languageOption') {
                 newFormData.nativeLanguage = value === 'Others' ? '' : value.toLowerCase();
             }
@@ -85,17 +85,11 @@ const AddPatient = () => {
 
         const { patientName, age, diagnosis, aphasiaSeverity, nativeLanguage } = formData;
         const trimmedName = patientName.trim();
-        let finalDiagnosis = diagnosis.trim().toLowerCase();
+        const trimmedDiagnosis = diagnosis.trim().toLowerCase();
         const trimmedLanguage = nativeLanguage.trim();
         const ageNumber = Number(age);
 
-        // Debug logging
         console.log('Form data before validation:', formData);
-
-        // Combine diagnosis with severity for aphasia
-        if (diagnosis === 'aphasia' && aphasiaSeverity) {
-            finalDiagnosis = `aphasia-${aphasiaSeverity.toLowerCase()}`;
-        }
 
         // Validation
         if (trimmedName.length < 2) {
@@ -108,12 +102,12 @@ const AddPatient = () => {
             setLoading(false);
             return;
         }
-        if (!diagnosisOptions.includes(diagnosis.toLowerCase())) {
+        if (!diagnosisOptions.includes(trimmedDiagnosis)) {
             setError('Please select a valid diagnosis from the list');
             setLoading(false);
             return;
         }
-        if (diagnosis === 'aphasia' && !aphasiaSeverity) {
+        if (trimmedDiagnosis === 'aphasia' && !aphasiaSeverity) {
             setError('Please select the severity for aphasia');
             setLoading(false);
             return;
@@ -132,35 +126,62 @@ const AddPatient = () => {
         }
         console.log('Submission token:', token.substring(0, 10) + '...');
 
-        const patientPayload = { patientName: trimmedName, age: ageNumber, diagnosis: finalDiagnosis, nativeLanguage: trimmedLanguage };
+        // Separate diagnosis and aphasiaSeverity for the patient payload
+        const patientPayload = { 
+            patientName: trimmedName, 
+            age: ageNumber, 
+            diagnosis: trimmedDiagnosis, 
+            nativeLanguage: trimmedLanguage,
+            ...(trimmedDiagnosis === 'aphasia' ? { aphasiaSeverity: aphasiaSeverity.toLowerCase() } : {})
+        };
 
         try {
+            console.log('Patient payload:', patientPayload);
+
             // Create patient
             const patientResponse = await axios.post(
                 `${import.meta.env.VITE_META_URI}/api/patients`,
                 patientPayload,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
+            console.log('Patient creation response:', patientResponse.data);
             const patientId = patientResponse.data.patient._id;
 
             // Create therapy plan
             const planResponse = await axios.post(
                 `${import.meta.env.VITE_META_URI}/api/therapy-plans`,
-                { patientId },
+                { 
+                    patientId,
+                    diagnosis: trimmedDiagnosis,
+                    age: ageNumber,
+                    nativeLanguage: trimmedLanguage,
+                    aphasiaSeverity: trimmedDiagnosis === 'aphasia' ? aphasiaSeverity.toLowerCase() : null
+                },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
-           
+            console.log('Therapy plan response:', planResponse.data);
+
             navigate(`/therapy-plans/patient/${patientId}`, {
                 state: { patient: patientResponse.data.patient, plan: planResponse.data.data }
             });
         } catch (error) {
-            console.error('Submission error:', error.response?.status, error.response?.data || error.message);
+            console.error('Full error object:', error);
+            console.error('Error response:', error.response);
+            console.error('Error details:', {
+                status: error.response?.status,
+                statusText: error.response?.statusText,
+                data: error.response?.data,
+                message: error.message
+            });
+
             if (error.response?.status === 401) {
                 setError('Session expired. Please log in again.');
                 localStorage.removeItem('token');
                 setTimeout(() => navigate('/login'), 2000);
+            } else if (error.response?.status === 500) {
+                setError('Server error. Please try again later or contact support if the problem persists.');
             } else {
-                setError(error.response?.data?.message || 'Failed to create patient/therapy plan');
+                setError(error.response?.data?.message || 'Failed to create patient/therapy plan. Please try again.');
             }
         } finally {
             setLoading(false);

@@ -14,30 +14,25 @@ const PORT = process.env.PORT; // Remove default 4000 to enforce .env value
 
 console.log("Loaded environment variables:", {
   PORT: process.env.PORT,
-  YOUTUBE_API_KEY: process.env.YOUTUBE_API_KEY ? process.env.YOUTUBE_API_KEY.substring(0, 5) + "..." : "undefined"
+  YOUTUBE_API_KEY: process.env.YOUTUBE_API_KEY ? process.env.YOUTUBE_API_KEY.substring(0, 5) + "..." : "undefined",
 });
 
 const app = express();
 app.use(express.json());
 
-// ✅ Enhanced CORS: Allow both local and Netlify frontend
+// Enhanced CORS: Allow both local and deployed frontend
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://echoease.netlify.app"
+  
+  "https://echoease.netlify.app/",
+  
 ];
 
 app.use(
   cors({
-    origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
-    credentials: true,
+    origin: allowedOrigins, // Use the allowedOrigins array
     methods: ["GET", "POST", "PUT", "DELETE"],
-    allowedHeaders: ["Authorization", "Content-Type"]
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
