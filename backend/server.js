@@ -23,8 +23,9 @@ app.use(express.json());
 // Enhanced CORS: Allow  deployed frontend
 const allowedOrigins = [
   
-  // "https://echoease.netlify.app",
-  "https://s69-ayishath-nahda-capstone-echo-ease.vercel.app/"
+   "https://echoease.netlify.app",
+   " http://localhost:5173/" ,
+   "https://s69-ayishath-nahda-capstone-git-14f999-ayishath-nahdas-projects.vercel.app/"
   
 ];
 
