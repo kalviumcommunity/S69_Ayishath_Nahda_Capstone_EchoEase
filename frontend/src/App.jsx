@@ -13,6 +13,7 @@ import PatientList from "./components/PatientList";
 
 
 import Profile from "./components/Profile";
+import ProgressTracking from "./components/ProgressTracker";
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
       <Route path="/therapy-plans/patient/:patientId" element={<TherapyPlans />} />
       <Route path="/patient-list"element={<PatientList />}/>
       <Route path="/profile"element={<Profile/>}/>
+      <Route path="/progress-tracking/patient/:patientId" element={<ProgressTracking/>}/>
      
     </Routes>
   );
