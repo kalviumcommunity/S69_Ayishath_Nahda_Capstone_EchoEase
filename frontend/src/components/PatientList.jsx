@@ -140,7 +140,7 @@ const PatientList = () => {
                     >
                       <FaTrash />
                     </button>
-                    {/* <button 
+                    <button 
                       onClick={(e) => {
                         e.stopPropagation();
                         navigate(`/progress-tracking/patient/${patient._id}`);
@@ -148,7 +148,7 @@ const PatientList = () => {
                       className="bg-[#365B6D] text-white px-3 py-1 rounded hover:bg-[#2a4758] transition-colors"
                     >
                       View Progress
-                    </button> */}
+                    </button>
                   </div>
                 </div>
               ))}
