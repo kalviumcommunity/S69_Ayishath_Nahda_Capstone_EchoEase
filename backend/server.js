@@ -20,9 +20,8 @@ console.log("Loaded environment variables:", {
 const app = express();
 app.use(express.json());
 
-// Enhanced CORS: Allow both local and deployed frontend
+// Enhanced CORS: Allow  deployed frontend
 const allowedOrigins = [
-  "http://localhost:5173",
   
   "https://echoease.netlify.app",
   
