@@ -9,8 +9,8 @@ const therapistRoutes = require("./routes/therapistRoutes");
 const authRoutes = require("./routes/authRoutes");
 const patientRoutes = require("./routes/patientRoutes");
 const therapyPlansRoutes = require("./routes/therapyPlanRoutes");
-// const progressRoutes = require("./routes/progressRoutes");
-const PORT = process.env.PORT; // Remove default 4000 to enforce .env value
+const progressRoutes = require("./routes/progessRoutes");
+const PORT = process.env.PORT; 
 
 console.log("Loaded environment variables:", {
   PORT: process.env.PORT,
@@ -54,7 +54,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/therapist", therapistRoutes);
 app.use("/api/patients", patientRoutes);
 app.use("/api/therapy-plans", therapyPlansRoutes);
-// app.use("/api/progress", progressRoutes);
+app.use("/api/progress", progressRoutes);
 
 // Root Route
 app.get("/", (req, res) => {

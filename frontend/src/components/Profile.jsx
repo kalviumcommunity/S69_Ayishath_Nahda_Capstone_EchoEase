@@ -74,23 +74,7 @@ const Profile = () => {
       setPreviewUrl(URL.createObjectURL(file));
       setMessage("");
     }
-  };  // const handleFileChange = (e) => {
-  //   const file = e.target.files[0];
-  //   if (file) {
-  //     if (!file.type.match('image.*')) {
-  //       setMessage("Please select an image file (JPEG, PNG)");
-  //       return;
-  //     }
-  //     if (file.size > 2 * 1024 * 1024) {
-  //       setMessage("File size must be less than 2MB");
-  //       return;
-  //     }
-      
-  //     setNewProfilePic(file);
-  //     setPreviewUrl(URL.createObjectURL(file));
-  //     setMessage("");
-  //   }
-  // };
+  };
 
   const handleSave = async () => {
     try {
