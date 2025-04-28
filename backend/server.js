@@ -24,8 +24,8 @@ app.use(express.json());
 const allowedOrigins = [
   
    "https://echoease.netlify.app",
-   " http://localhost:5173/" ,
-   "https://s69-ayishath-nahda-capstone-echo-ease.vercel.app/"
+   " http://localhost:5173" ,
+   "https://s69-ayishath-nahda-capstone-echo-ease.vercel.app"
   
 ];
 
