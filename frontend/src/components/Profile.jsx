@@ -8,7 +8,7 @@ const Profile = () => {
     name: "",
     designation: "",
     hospital: "",
-    profilePic: ""
+    profilePic: "",
   });
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
@@ -26,13 +26,15 @@ const Profile = () => {
           return;
         }
 
-        const res = await axios.get("${import.meta.env.VITE_META_URI}/api/therapist/profile", {
-          headers: { Authorization: `Bearer ${token} `},
+        const res = await axios.get("http://localhost:5000/api/therapist/profile", {
+          headers: { Authorization: `Bearer ${token}` },
         });
 
         const profileData = {
-         
-          profilePic: res.data.profilePic || ""
+          name: res.data.name || "",
+          designation: res.data.designation || "",
+          hospital: res.data.hospital || "",
+          profilePic: res.data.profilePic || "",
         };
 
         setTherapist(profileData);
@@ -40,7 +42,7 @@ const Profile = () => {
           // Ensure the URL is absolute if it's not already
           const imageUrl = res.data.profilePic.startsWith('http') 
             ? res.data.profilePic 
-            : `${import.meta.env.VITE_META_URI}${res.data.profilePic}`;
+            : `http://localhost:5000${res.data.profilePic}`;
           setPreviewUrl(imageUrl);
         }
       } catch (error) {
@@ -91,7 +93,7 @@ const Profile = () => {
       }
 
       const res = await axios.put(
-        `${import.meta.env.VITE_META_URI}/api/therapist/profile`, 
+        "http://localhost:5000/api/therapist/profile", 
         formData, 
         {
           headers: {
@@ -113,7 +115,7 @@ const Profile = () => {
       if (res.data.therapist.profilePic) {
         const imageUrl = res.data.therapist.profilePic.startsWith('http') 
           ? res.data.therapist.profilePic 
-          : $`{import.meta.env.VITE_META_URI}${res.data.therapist.profilePic}`;
+          : `http://localhost:5000${res.data.therapist.profilePic}`;
         setPreviewUrl(imageUrl);
       }
 
