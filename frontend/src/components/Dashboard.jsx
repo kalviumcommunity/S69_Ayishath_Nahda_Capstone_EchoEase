@@ -1,12 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 const Dashboard = () => {
-  const [therapist, setTherapist] = useState({
-    name: "",
-    profilePic: ""
-  });
+  const [therapist, setTherapist] = useState({ name: "", profilePic: "" });
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -21,16 +18,16 @@ const Dashboard = () => {
       const therapistRes = await axios.get(`${import.meta.env.VITE_META_URI}/api/therapist`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      
+
       setTherapist({
         name: therapistRes.data.name,
-        profilePic: therapistRes.data.profilePic 
+        profilePic: therapistRes.data.profilePic
           ? `${import.meta.env.VITE_META_URI}${therapistRes.data.profilePic}`
-          : "/user.png"
+          : "/user.png",
       });
 
     } catch (error) {
-      console.error("Error fetching data:", error);
+      console.error("Error fetching therapist data:", error);
     } finally {
       setLoading(false);
     }
@@ -38,41 +35,47 @@ const Dashboard = () => {
 
   useEffect(() => {
     fetchTherapistData();
-    
-    // Add event listener for profile updates
-    const handleProfileUpdate = () => {
-      fetchTherapistData(); // Refetch therapist data when profile updates
-    };
-    
-    window.addEventListener('profileUpdate', handleProfileUpdate);
-    return () => {
-      window.removeEventListener('profileUpdate', handleProfileUpdate);
-    };
   }, [navigate]);
 
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    navigate("/login");
+  };
+
   return (
-    <div className="min-h-screen bg-[#D9D9D9] flex flex-col">
-      {/* Header Section */}
-      <header className="bg-[#D9D9D9] shadow-sm p-2 flex justify-between items-center h-[60px]">
-        <div className="flex items-center">
-          <img
-            src="/logo.png"
-            alt="EchoEase Logo"
-            className="h-20 mr-3 object-contain"
-          />
-        </div>
-        <div 
-          className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center overflow-hidden cursor-pointer"
-          onClick={() => navigate("/profile")}
-        >
-          <img
-            src={therapist.profilePic}
-            alt="User Profile"
-            className="w-full h-full object-cover"
-            onError={(e) => {
-              e.target.src = "/user.png";
-            }}
-          />
+    <div className="min-h-screen bg-[#D9D9D9] flex flex-col relative">
+      {/* Header */}
+      <header className="bg-[#D9D9D9] shadow-sm p-2 flex justify-between items-center h-[60px] relative">
+        <img src="/logo.png" alt="Logo" className="h-20 object-contain" />
+
+        {/* Profile Section with hover */}
+        <div className="relative group">
+          <div
+            className="w-10 h-10 rounded-full overflow-hidden cursor-pointer border-2 border-[#365B6D]"
+          >
+            <img
+              src={therapist.profilePic}
+              alt="Profile"
+              className="w-full h-full object-cover"
+              onError={(e) => (e.target.src = "/user.png")}
+            />
+          </div>
+
+          {/* Dropdown Menu */}
+          <div className="absolute right-0 mt-2 w-40 bg-[#B2D1CF] rounded-lg shadow-lg overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-50">
+            <button
+              className="block w-full text-left px-4 py-2 text-[#365B6D] hover:bg-[#365B6D] hover:text-white transition-colors"
+              onClick={() => navigate("/profile")}
+            >
+              View Profile
+            </button>
+            <button
+              className="block w-full text-left px-4 py-2 text-[#365B6D] hover:bg-[#365B6D] hover:text-white transition-colors"
+              onClick={handleLogout}
+            >
+              Logout
+            </button>
+          </div>
         </div>
       </header>
 
@@ -83,15 +86,15 @@ const Dashboard = () => {
           backgroundImage: `url('https://i.pinimg.com/736x/11/36/22/1136225d739b320c6323289af7aa37a8.jpg')`,
         }}
       >
-        {/* Overlay for Background Tint */}
+        {/* Overlay */}
         <div className="absolute inset-0 bg-[#365B6D] opacity-70"></div>
 
-        {/* Dashboard Title */}
+        {/* Title */}
         <h1 className="relative z-10 text-4xl font-bold text-white mt-8 mb-8">
-          {loading ? "Loading..." : `${therapist.name}'s Dashboard`}
+          {loading ? "Loading..." : `${therapist.name || "Therapist"}'s Dashboard`}
         </h1>
 
-        {/* Buttons Container - Updated styling here */}
+        {/* Buttons */}
         <div className="relative z-10 mt-20 w-full flex justify-center">
           <div className="flex space-x-8">
             <button
@@ -109,7 +112,6 @@ const Dashboard = () => {
             >
               View Patients
             </button>
-         
           </div>
         </div>
       </main>
