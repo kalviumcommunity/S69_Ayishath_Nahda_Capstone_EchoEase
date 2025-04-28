@@ -11,6 +11,7 @@ import AddPatient from "./components/AddPatient";
 import TherapyPlans from "./components/TherapyPlans";
 import PatientList from "./components/PatientList";
 
+
 import Profile from "./components/Profile";
 
 function App() {
@@ -27,6 +28,7 @@ function App() {
       <Route path="/therapy-plans/patient/:patientId" element={<TherapyPlans />} />
       <Route path="/patient-list"element={<PatientList />}/>
       <Route path="/profile"element={<Profile/>}/>
+     
     </Routes>
   );
 }

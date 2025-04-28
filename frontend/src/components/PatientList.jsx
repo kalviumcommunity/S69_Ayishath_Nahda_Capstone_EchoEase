@@ -118,10 +118,12 @@ const PatientList = () => {
               {filteredPatients.map((patient, index) => (
                 <div
                   key={patient._id}
-                  className="flex items-center justify-between p-3 bg-white bg-opacity-90 rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-                  onClick={() => navigate(`/therapy-plans/patient/${patient._id}`)}
+                  className="flex items-center justify-between p-3 bg-white bg-opacity-90 rounded-lg shadow-sm hover:shadow-md transition-shadow"
                 >
-                  <div className="flex items-center">
+                  <div 
+                    className="flex items-center cursor-pointer flex-grow"
+                    onClick={() => navigate(`/therapy-plans/patient/${patient._id}`)}
+                  >
                     <span className="text-[#365B6D] font-medium mr-4 w-6 text-right">
                       {(currentPage - 1) * 10 + index + 1}.
                     </span>
@@ -130,13 +132,24 @@ const PatientList = () => {
                       <p className="text-sm text-gray-600">{patient.age} years</p>
                     </div>
                   </div>
-                  <button
-                    onClick={(e) => handleDelete(patient._id, e)}
-                    className="text-red-500 hover:text-red-700 p-2 rounded-full hover:bg-red-100 transition-colors"
-                    aria-label="Delete patient"
-                  >
-                    <FaTrash />
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={(e) => handleDelete(patient._id, e)}
+                      className="text-red-500 hover:text-red-700 p-2 rounded-full hover:bg-red-100 transition-colors"
+                      aria-label="Delete patient"
+                    >
+                      <FaTrash />
+                    </button>
+                    {/* <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/progress-tracking/patient/${patient._id}`);
+                      }}
+                      className="bg-[#365B6D] text-white px-3 py-1 rounded hover:bg-[#2a4758] transition-colors"
+                    >
+                      View Progress
+                    </button> */}
+                  </div>
                 </div>
               ))}
             </div>

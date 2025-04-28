@@ -179,6 +179,11 @@ const TherapyPlans = () => {
       fetchTherapyPlan(); // Re-fetch the original plan
     }
   };
+  const handleProgressNoteClick = () => {
+    // Navigating to the progress page
+    navigate(`/progress-note/${patientId}`);
+  };
+
 
   if (loading)
     return (
@@ -412,8 +417,10 @@ const TherapyPlans = () => {
             >
               Edit
             </button>
+            
           )}
         </div>
+        
       </div>
     </div>
   );

@@ -9,7 +9,7 @@ const therapistRoutes = require("./routes/therapistRoutes");
 const authRoutes = require("./routes/authRoutes");
 const patientRoutes = require("./routes/patientRoutes");
 const therapyPlansRoutes = require("./routes/therapyPlanRoutes");
-
+// const progressRoutes = require("./routes/progressRoutes");
 const PORT = process.env.PORT; // Remove default 4000 to enforce .env value
 
 console.log("Loaded environment variables:", {
@@ -24,8 +24,8 @@ app.use(express.json());
 const allowedOrigins = [
   
    "https://echoease.netlify.app",
-   " http://localhost:5173" ,
-   "https://s69-ayishath-nahda-capstone-echo-ease.vercel.app"
+   "http://localhost:5173" 
+
   
 ];
 
@@ -54,6 +54,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/therapist", therapistRoutes);
 app.use("/api/patients", patientRoutes);
 app.use("/api/therapy-plans", therapyPlansRoutes);
+// app.use("/api/progress", progressRoutes);
 
 // Root Route
 app.get("/", (req, res) => {
