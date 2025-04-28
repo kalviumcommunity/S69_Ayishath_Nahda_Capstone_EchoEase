@@ -5,9 +5,9 @@ import { Navbar } from "./Navbar";
 
 const Profile = () => {
   const [therapist, setTherapist] = useState({
-    // name: "",
-    // designation: "",
-    // hospital: "",
+    name: "",
+    designation: "",
+    hospital: "",
     profilePic: ""
   });
   const [loading, setLoading] = useState(true);
@@ -26,8 +26,8 @@ const Profile = () => {
           return;
         }
 
-        const res = await axios.get(`${import.meta.env.VITE_META_URI}/api/therapist/profile`, {
-          headers: { Authorization: `Bearer ${token}` },
+        const res = await axios.get("${import.meta.env.VITE_META_URI}/api/therapist/profile", {
+          headers: { Authorization: `Bearer ${token} `},
         });
 
         const profileData = {
@@ -58,7 +58,23 @@ const Profile = () => {
     setMessage("");
   };
 
-
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (!file.type.match('image.*')) {
+        setMessage("Please select an image file (JPEG, PNG)");
+        return;
+      }
+      if (file.size > 2 * 1024 * 1024) {
+        setMessage("File size must be less than 2MB");
+        return;
+      }
+      
+      setNewProfilePic(file);
+      setPreviewUrl(URL.createObjectURL(file));
+      setMessage("");
+    }
+  };
 
   const handleSave = async () => {
     try {
@@ -66,9 +82,9 @@ const Profile = () => {
       if (!token) throw new Error("No token found");
 
       const formData = new FormData();
-      // formData.append("name", therapist.name);
-      // formData.append("designation", therapist.designation);
-      // formData.append("hospital", therapist.hospital);
+      formData.append("name", therapist.name);
+      formData.append("designation", therapist.designation);
+      formData.append("hospital", therapist.hospital);
       
       if (newProfilePic) {
         formData.append("profilePic", newProfilePic);
@@ -97,7 +113,7 @@ const Profile = () => {
       if (res.data.therapist.profilePic) {
         const imageUrl = res.data.therapist.profilePic.startsWith('http') 
           ? res.data.therapist.profilePic 
-          : `${import.meta.env.VITE_META_URI}${res.data.therapist.profilePic}`;
+          : $`{import.meta.env.VITE_META_URI}${res.data.therapist.profilePic}`;
         setPreviewUrl(imageUrl);
       }
 
