@@ -61,7 +61,7 @@ const ProgressTracking = () => {
   return (
     <div
       className="min-h-screen flex justify-center items-center bg-cover bg-center relative"
-      style={{ backgroundImage: url('https://i.pinimg.com/736x/0c/ca/d1/0ccad1b5d5d43afd2ad36ba4ae7cb977.jpg') }}
+      style={{ backgroundImage: `url('https://i.pinimg.com/736x/0c/ca/d1/0ccad1b5d5d43afd2ad36ba4ae7cb977.jpg')` }}
     >
       <div className="absolute inset-0 bg-[#365B6D] opacity-[0.59]"></div>
       <button
