@@ -144,6 +144,7 @@ const TherapyPlans = () => {
       if (!plan.goals || !Array.isArray(plan.goals)) {
         throw new Error("Goals must be an array");
       }
+    
 
       const res = await fetch(`${import.meta.env.VITE_META_URI}/api/therapy-plans/${plan._id}`, {
         method: "PUT",

@@ -16,7 +16,7 @@ const Dashboard = () => {
       }
 
       const therapistRes = await axios.get(`${import.meta.env.VITE_META_URI}/api/therapist`, {
-        headers: { Authorization: `Bearer ${token} `},
+        headers: {Authorization: `Bearer ${token} `},
       });
 
       setTherapist({
@@ -39,7 +39,7 @@ const Dashboard = () => {
 
   const handleLogout = () => {
     localStorage.removeItem("token");
-    navigate("/login");
+    navigate("/");
   };
 
   return (
@@ -83,7 +83,8 @@ const Dashboard = () => {
       <main
         className="flex-1 flex flex-col items-center bg-cover bg-center relative"
         style={{
-          backgroundImage: url('https://i.pinimg.com/736x/11/36/22/1136225d739b320c6323289af7aa37a8.jpg'),
+          backgroundImage: `url('https://i.pinimg.com/736x/11/36/22/1136225d739b320c6323289af7aa37a8.jpg')`,
+
         }}
       >
         {/* Overlay */}
