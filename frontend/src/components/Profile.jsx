@@ -93,7 +93,7 @@ const Profile = () => {
       }
 
       const res = await axios.put(
-        "${import.meta.env.VITE_META_URI}/api/therapist/profile", 
+        `${import.meta.env.VITE_META_URI}/api/therapist/profile`, 
         formData, 
         {
           headers: {
