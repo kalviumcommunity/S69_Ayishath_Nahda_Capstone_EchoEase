@@ -23,8 +23,7 @@ app.use(express.json());
 // Enhanced CORS: Allow  deployed frontend
 const allowedOrigins = [
   
-   "https://echoease.netlify.app",
-   "http://localhost:5173" 
+   "https://echoease.netlify.app"
 
   
 ];
