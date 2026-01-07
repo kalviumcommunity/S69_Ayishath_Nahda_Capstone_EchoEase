@@ -5,7 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 const Signup = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    fullName: "",
+    fullname: "",
     email: "",
     designation: "Speech Therapist",
     hospital: "",
@@ -24,14 +24,14 @@ const Signup = () => {
     setSuccessMessage("");
 
     const trimmedFormData = {
-      fullName: formData.fullName.trim(),
+      fullname: formData.fullname.trim(),
       email: formData.email.trim(),
       designation: formData.designation,
       hospital: formData.hospital.trim(),
       password: formData.password.trim(),
     };
     console.log("Signup attempt:", {
-      fullName: trimmedFormData.fullName,
+      fullname: trimmedFormData.fullname,
       email: trimmedFormData.email,
       designation: trimmedFormData.designation,
       hospital: trimmedFormData.hospital,
@@ -44,7 +44,7 @@ const Signup = () => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          fullName: trimmedFormData.fullName,
+          fullname: trimmedFormData.fullname,
           email: trimmedFormData.email,
           designation: trimmedFormData.designation,
           hospital: trimmedFormData.hospital,
