@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 const bcrypt=require("bcryptjs");
 
 const TherapistSchema = new mongoose.Schema({       //therapist/audiologist schema
-  name: {
+  fullname: {
      type: String, 
      required: true 
     },
