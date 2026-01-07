@@ -93,7 +93,7 @@ const Signup = () => {
           <label className="text-gray-700 font-semibold flex items-center">Full Name</label>
           <input
             type="text"
-            name="fullName"
+            name="fullname"
             placeholder="Enter name.."
             className="p-3 bg-gray-100 text-gray-800 rounded-md focus:outline-none focus:ring-2 focus:ring-[#2D5B64]"
             value={formData.fullName}
