@@ -18,9 +18,9 @@ const JWT_SECRET = process.env.JWT_SECRET;
 // **Signup Route**        //db write
 router.post("/signup", async (req, res) => {
     try {
-        const { name, email, designation, hospital, password } = req.body;
+        const { fullname, email, designation, hospital, password } = req.body;
 
-        if (!name || !email || !designation || !hospital || !password) {
+        if (!fullname || !email || !designation || !hospital || !password) {
             return res.status(400).json({ error: "All fields are required" });
         }
 
@@ -34,7 +34,7 @@ router.post("/signup", async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const therapist = new Therapist({
-            name,
+            fullname,
             email: emailLower,
             designation,
             hospital,
